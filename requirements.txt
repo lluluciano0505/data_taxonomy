@@ -1,0 +1,24 @@
+flask
+pandas
+numpy
+pyyaml
+python-dotenv
+pillow
+pytesseract
+pypdf
+pdf2image
+pymupdf
+python-docx
+beautifulsoup4
+requests
+openai
+
+# Format-specific parsers (loaded on demand — missing = that format silently skipped)
+ezdxf
+geopandas
+extract-msg
+python-pptx
+openpyxl
+
+# Testing
+pytest

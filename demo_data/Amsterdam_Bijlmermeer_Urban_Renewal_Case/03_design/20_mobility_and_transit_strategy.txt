@@ -1,0 +1,16 @@
+SYNTHETIC DEMO — illustrative training case, not an authentic project record.
+
+
+MOBILITY AND TRANSIT STRATEGY
+
+The case proposes a movement hierarchy that gives priority to walking, cycling, accessible transit transfer, emergency access, and then servicing. The old separation between elevated movement and ground-level streets is treated as a coordination condition rather than something to erase in one phase.
+
+ILLUSTRATIVE MOVES
+
+- Create a 4.0 metre shared mobility corridor at the main desire line.
+- Add two raised crossings at the service-road interface.
+- Consolidate deliveries into a timed east-court bay.
+- Keep emergency access clear while reducing through-traffic.
+- Improve wayfinding between the metro connection, community hub, and tower entrances.
+
+The strategy should be tested against the transport counts, noise assessment, phasing plan, and resident safety map before the route is fixed.

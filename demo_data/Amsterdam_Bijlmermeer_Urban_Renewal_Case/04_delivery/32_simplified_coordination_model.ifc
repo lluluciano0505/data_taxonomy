@@ -1,0 +1,20 @@
+SYNTHETIC DEMO — illustrative training case, not an authentic project record.
+
+
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('SYNTHETIC DEMO — simplified coordination model, not for construction'),'2;1');
+FILE_NAME('bijlmermeer_cluster_b_demo.ifc','2026-01-15T00:00:00',('Synthetic Demo Team'),('Synthetic Demo Studio'),'DataTaxonomy illustrative exporter','No real project','SYNTHETIC DEMO');
+FILE_SCHEMA(('IFC4'));
+ENDSEC;
+DATA;
+#1=IFCPROJECT('3n_demo_project',$,'Amsterdam Bijlmermeer Urban Renewal Case',$,$,$,$,(#2),$);
+#2=IFCUNITASSIGNMENT((#3));
+#3=IFCSIUNIT(*,.LENGTHUNIT.,$,.METRE.);
+#4=IFCSITE('3n_demo_site',$,'Cluster B illustrative site',$,$,$,$,$,.ELEMENT.,$,$,$,$,$);
+#5=IFCBUILDING('3n_demo_building',$,'B-T02 retained tower',$,$,$,$,$,.ELEMENT.,$,$);
+#6=IFCBUILDINGSTOREY('3n_demo_storey',$,'Ground threshold',$,$,$,$,$,.ELEMENT.,0.);
+#7=IFCSPACE('3n_demo_space',$,'Community hub test space',$,$,$,$,$,.ELEMENT.,$);
+#8=IFCELEMENTASSEMBLY('3n_demo_assembly',$,'Blue-green spine coordination placeholder',$,$,$,$,$,.NOTDEFINED.);
+ENDSEC;
+END-ISO-10303-21;

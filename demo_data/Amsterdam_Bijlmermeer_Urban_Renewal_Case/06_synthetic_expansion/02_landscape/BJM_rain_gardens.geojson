@@ -1,0 +1,117 @@
+{
+  "type": "FeatureCollection",
+  "name": "Synthetic Bijlmermeer rain gardens",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "RG-01",
+        "type": "proposed rain garden",
+        "area_m2": 90,
+        "synthetic": true,
+        "coordinate_note": "Illustrative positions, not survey data"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              4.972,
+              52.313
+            ],
+            [
+              4.972300000000001,
+              52.313
+            ],
+            [
+              4.972300000000001,
+              52.3132
+            ],
+            [
+              4.972,
+              52.3132
+            ],
+            [
+              4.972,
+              52.313
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "RG-02",
+        "type": "proposed rain garden",
+        "area_m2": 120,
+        "synthetic": true,
+        "coordinate_note": "Illustrative positions, not survey data"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              4.973,
+              52.3135
+            ],
+            [
+              4.9733,
+              52.3135
+            ],
+            [
+              4.9733,
+              52.3137
+            ],
+            [
+              4.973,
+              52.3137
+            ],
+            [
+              4.973,
+              52.3135
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "RG-03",
+        "type": "proposed rain garden",
+        "area_m2": 150,
+        "synthetic": true,
+        "coordinate_note": "Illustrative positions, not survey data"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              4.974,
+              52.314
+            ],
+            [
+              4.9743,
+              52.314
+            ],
+            [
+              4.9743,
+              52.3142
+            ],
+            [
+              4.974,
+              52.3142
+            ],
+            [
+              4.974,
+              52.314
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

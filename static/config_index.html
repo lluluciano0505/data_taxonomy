@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataTaxonomy — Projects</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #F5F3EE;
+    --surface:   #FFFFFF;
+    --surface-2: #F7F5F1;
+    --hover:     #F0EEE8;
+    --fg:        #1D1D1F;
+    --fg-2:      #2B2B2F;
+    --muted:     #66666B;
+    --muted-2:   #8F8F96;
+    --border:    #E7E1D9;
+    --accent:    #B95B3C;
+    --accent-2:  #A64F30;
+    --err:       #D92D20;
+    --ok:        #14804A;
+    --shadow-1:  0 2px 8px rgba(24,24,27,.04);
+    --shadow-2:  0 10px 28px rgba(24,24,27,.08);
+    --r: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg); color: var(--fg);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 300; font-size: 13px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased; min-height: 100vh;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+  }
+
+  .shell { max-width: 1100px; margin: 0 auto; padding: 28px 24px 80px; }
+
+  /* ── Topbar ── */
+  header.topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,0.9); border: 1px solid var(--border);
+    border-radius: 16px; box-shadow: var(--shadow-1);
+    padding: 14px 18px; margin-bottom: 28px; gap: 20px;
+    backdrop-filter: blur(8px);
+  }
+  .brand { font-family: 'JetBrains Mono'; font-size: 13px; letter-spacing: .08em; }
+  .brand b { font-weight: 500; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .nav-link {
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted); text-decoration: none;
+    border-bottom: 1px solid transparent; transition: color .15s, border-color .15s;
+  }
+  .nav-link:hover { color: var(--fg); border-bottom-color: var(--fg); }
+
+  .ham-wrap { position: relative; }
+  .ham-btn {
+    width: 30px; height: 30px; border: 1px solid var(--border);
+    border-radius: 10px; background: var(--surface-2); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    gap: 4px; padding: 0; transition: border-color .2s, background .2s;
+  }
+  .ham-btn:hover { border-color: var(--fg); background: var(--hover); }
+  .ham-btn span { display: block; width: 12px; height: 1px; background: var(--fg); }
+  .ham-menu {
+    position: absolute; top: calc(100% + 10px); right: 0;
+    width: 200px; background: rgba(255,255,255,.98); border: 1px solid var(--border);
+    border-radius: 12px; box-shadow: var(--shadow-2); padding: 6px;
+    display: none; z-index: 50;
+  }
+  .ham-menu.open { display: block; }
+  .ham-item {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 9px 10px; border-radius: 8px; color: var(--muted);
+    font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 400;
+    text-decoration: none; transition: background .15s, color .15s;
+  }
+  .ham-item:hover { background: var(--surface-2); color: var(--fg); }
+  .ham-icon { width: 18px; font-size: 10px; opacity: .7; text-align: center; }
+  .ham-sep { height: 1px; background: var(--border); margin: 4px 0; }
+
+  /* ── Run panel ── */
+  .run-panel {
+    background: linear-gradient(180deg, #fff 0%, #faf8f4 100%);
+    border: 1px solid var(--border);
+    border-radius: 18px; box-shadow: var(--shadow-1);
+    padding: 26px 24px 20px; margin-bottom: 30px;
+  }
+  .run-panel-hd {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 18px;
+  }
+  .run-panel-hd .label { flex-shrink: 0; }
+  .run-project-name {
+    font-size: 14px; font-weight: 400; color: var(--fg); flex: 1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .run-meta {
+    display: flex; gap: 24px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .run-meta-item { display: flex; flex-direction: column; gap: 3px; }
+  .run-meta-item .label { margin-bottom: 0; }
+  .run-meta-val {
+    font-family: 'JetBrains Mono'; font-size: 11px; color: var(--fg-2);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 280px;
+  }
+
+  .run-actions { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .run-btn {
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; border: none; padding: 8px 16px; cursor: pointer;
+    transition: opacity .2s, background .2s; white-space: nowrap;
+  }
+  .run-btn.primary  { background: var(--fg); color: #fff; }
+  .run-btn.primary:hover { opacity: .8; }
+  .run-btn.primary:disabled { opacity: .35; cursor: default; }
+  .run-btn.danger   { background: transparent; border: 1px solid var(--err); color: var(--err); }
+  .run-btn.danger:hover { background: var(--err); color: #fff; }
+  .run-btn.ghost    { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+  .run-btn.ghost:hover { border-color: var(--fg); color: var(--fg); }
+
+  .status-chip {
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: .06em;
+    padding: 3px 9px; border-radius: 2px;
+  }
+  .chip-idle    { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+  .chip-running { background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; }
+  .chip-done    { background: #F0FDF4; color: var(--ok); border: 1px solid #BBF7D0; }
+  .chip-err     { background: #FEF2F2; color: var(--err); border: 1px solid #FECACA; }
+
+  .progress-bar-wrap {
+    width: 100%; height: 2px; background: var(--border); margin-bottom: 8px; display: none;
+  }
+  .progress-bar-fill { height: 100%; background: var(--fg); width: 0; transition: width .4s ease; }
+  .progress-txt { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--muted); margin-bottom: 10px; }
+
+  .log-box {
+    background: var(--surface-2); border: 1px solid var(--border);
+    padding: 12px 14px; font-family: 'JetBrains Mono'; font-size: 10px;
+    line-height: 1.75; color: var(--fg); max-height: 200px; overflow-y: auto;
+    white-space: pre-wrap; word-break: break-all; display: none;
+  }
+  .db-row { display: none; gap: 8px; margin-top: 14px; align-items: center; }
+  .db-btn {
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: .08em;
+    text-transform: uppercase; border: 1px solid var(--border); background: transparent;
+    padding: 7px 14px; cursor: pointer; color: var(--muted); transition: all .2s;
+  }
+  .db-btn:hover { border-color: var(--fg); color: var(--fg); }
+
+  /* ── Model select ── */
+  .rc-model-select {
+    -webkit-appearance: none; appearance: none;
+    background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236B6B6B'/%3E%3C/svg%3E") no-repeat right 2px center;
+    border: none; border-bottom: 1px solid var(--border);
+    font-family: 'JetBrains Mono'; font-size: 11px; color: var(--fg-2);
+    padding: 2px 18px 2px 0; cursor: pointer; outline: none;
+    transition: border-color .2s;
+  }
+  .rc-model-select:focus { border-bottom-color: var(--fg); }
+  .rc-model-select:hover { border-bottom-color: var(--muted); }
+
+  /* ── Sample slider ── */
+  .sample-slider-wrap { display: flex; flex-direction: column; gap: 4px; min-width: 180px; }
+  .sample-slider-row  { display: flex; align-items: center; gap: 8px; }
+  .sample-slider {
+    -webkit-appearance: none; appearance: none;
+    width: 150px; height: 2px;
+    background: var(--border); outline: none; cursor: pointer;
+    transition: background .2s;
+  }
+  .sample-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px;
+    border-radius: 50%; background: var(--fg); cursor: pointer;
+    transition: transform .15s;
+  }
+  .sample-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+  .sample-slider::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--fg); cursor: pointer; border: none;
+  }
+  .sample-slider-val {
+    font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 500;
+    color: var(--fg); min-width: 48px; text-align: right;
+  }
+  .sample-slider-hint { font-size: 10px; color: var(--muted-2); }
+
+  /* ── Project cards ── */
+  h1 { font-size: 28px; font-weight: 300; letter-spacing: -.02em; margin-bottom: 10px; }
+  .lede { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+
+  .projects-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px; margin-bottom: 48px;
+  }
+  .project-card {
+    border: 1px solid var(--border); background: linear-gradient(180deg, #fff 0%, #fbfaf8 100%);
+    border-radius: 16px; box-shadow: var(--shadow-1);
+    padding: 18px 18px 16px; cursor: pointer;
+    transition: box-shadow .2s, transform .15s, border-color .2s;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .project-card:hover { box-shadow: var(--shadow-2); transform: translateY(-1px); border-color: #d9d0c7; }
+  .project-card.selected { border-color: var(--accent); box-shadow: var(--shadow-2); }
+  .project-card.new-card {
+    border-style: dashed; color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; min-height: 140px;
+  }
+  .project-card.new-card:hover { color: var(--fg); border-color: var(--fg); }
+  .card-title { font-size: 14px; font-weight: 500; }
+  .card-subtitle { font-size: 12px; color: var(--muted); }
+  .card-meta { font-size: 11px; color: var(--muted-2); padding-top: 8px; border-top: 1px solid var(--border); }
+  .card-actions { display: flex; gap: 5px; margin-top: auto; }
+  .card-btn {
+    flex: 1; padding: 7px 8px; border: 1px solid var(--border); background: var(--surface-2);
+    font-family: 'JetBrains Mono'; font-size: 10px; cursor: pointer;
+    color: var(--muted); transition: all .2s; letter-spacing: .06em;
+    border-radius: 10px;
+  }
+  .card-btn:hover { border-color: var(--fg); color: var(--fg); }
+  .card-btn.danger:hover { border-color: var(--err); color: var(--err); }
+
+  /* ── Info bar ── */
+  .info-bar {
+    padding: 9px 14px; border-left: 2px solid var(--ok); background: var(--surface);
+    font-size: 12px; margin-bottom: 20px; display: none;
+  }
+  .info-bar.show { display: block; }
+
+  /* ── Modal ── */
+  .modal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.28); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .modal.show { display: flex; }
+  .modal-content {
+    background: var(--surface); padding: 32px;
+    border: 1px solid var(--border); max-width: 380px; width: 90%;
+  }
+  .modal-content h3 { margin-bottom: 16px; font-size: 16px; font-weight: 400; }
+  .modal-field { margin-bottom: 16px; }
+  .modal-field input {
+    width: 100%; border: none; border-bottom: 1px solid var(--border);
+    padding: 8px 0; font-family: inherit; font-size: 13px; color: var(--fg);
+  }
+  .modal-field input:focus { outline: none; border-bottom-color: var(--fg); }
+  .modal-buttons { display: flex; gap: 10px; margin-top: 24px; }
+  .modal-btn {
+    flex: 1; padding: 10px; border: 1px solid var(--border); background: transparent;
+    font-family: 'JetBrains Mono'; font-size: 10px; cursor: pointer;
+    color: var(--muted); letter-spacing: .08em; text-transform: uppercase;
+  }
+  .modal-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .modal-btn:hover { border-color: var(--fg); color: var(--fg); }
+  .modal-btn.primary:hover { background: var(--accent-2); border-color: var(--accent-2); }
+
+  /* Quiet project overview: secondary controls stay available on demand. */
+  .shell { max-width: 1060px; padding-top: 32px; }
+  header.topbar { background: none; border: 0; box-shadow: none; padding: 0; margin-bottom: 36px; }
+  .run-panel { background: var(--surface); border: 0; box-shadow: none; padding: 28px; }
+  .run-project-name { font-size: 19px; white-space: normal; }
+  .run-options, .run-log { color: var(--muted); margin: 12px 0 20px; }
+  summary { cursor: pointer; width: fit-content; font-size: 12px; }
+  .run-meta { padding-top: 18px; margin-bottom: 4px; }
+  .run-actions { margin-top: 20px; margin-bottom: 0; }
+  .run-btn, .db-btn { border-radius: 9px; padding: 11px 16px; font-family: inherit; letter-spacing: 0; text-transform: none; font-size: 13px; }
+  .run-btn.ghost, .db-btn { border: 0; background: var(--surface-2); }
+  .rc-model-select { background: none; border: 0; cursor: default; }
+  .log-box { border: 0; border-radius: 10px; margin-top: 12px; }
+  .progress-txt { margin-top: 12px; }
+  .progress-bar-wrap { margin-top: 20px; }
+  h1 { font-size: 22px; margin: 32px 0 18px; }
+  .project-card { border: 1px solid transparent; background: white; box-shadow: none; padding: 22px; gap: 16px; }
+  .project-card.selected { border-color: #b95b3c55; box-shadow: none; background: #fffaf5; }
+  .project-card:hover { box-shadow: 0 5px 18px #24242408; }
+  .card-actions { justify-content: space-between; align-items: center; }
+  .card-btn { flex: initial; border: 0; background: none; padding: 6px 0; font: inherit; }
+  .card-more { position: relative; }
+  .card-more > div { position: absolute; right: 0; top: 26px; min-width: 110px; padding: 10px 16px; background: white; border-radius: 10px; box-shadow: var(--shadow-2); z-index: 5; }
+  .card-more .card-btn { display: block; width: 100%; text-align: left; }
+  .project-card.new-card { border: 0; background: #eeece6; min-height: 120px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  @media(max-width:600px) { .shell {padding:24px 16px 60px} .run-panel {padding:20px} .run-panel-hd {flex-wrap:wrap} .run-panel-hd .label {width:100%} .projects-grid {grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <header class="topbar">
+    <div class="brand">Data Taxonomy / <b>Project Manager</b></div>
+    <div class="topbar-right">
+      <div class="ham-wrap">
+        <button class="ham-btn" id="hamBtn" onclick="toggleHam()" aria-label="Navigation menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="ham-menu" id="hamMenu">
+          <a class="ham-item" href="/" onclick="closeHam()">
+            <span class="ham-icon">•</span><span>Home</span>
+          </a>
+          <a class="ham-item" href="/taxonomy-editor" target="_blank" onclick="closeHam()">
+            <span class="ham-icon">•</span><span>Taxonomy Editor</span>
+          </a>
+          <a class="ham-item" href="/wizard.html" target="_blank" onclick="closeHam()">
+            <span class="ham-icon">•</span><span>Config Wizard</span>
+          </a>
+          <div class="ham-sep"></div>
+          <a class="ham-item" href="/results-ui" target="_blank" onclick="closeHam()">
+            <span class="ham-icon">↗</span><span>Dashboard</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Run Panel ── -->
+  <div class="run-panel">
+    <div class="run-panel-hd">
+      <span class="label">Selected project</span>
+      <span class="run-project-name" id="currentProject">—</span>
+      <span class="status-chip chip-idle" id="statusChip">Idle</span>
+    </div>
+
+    <details class="run-options"><summary>Processing options</summary><div class="run-meta">
+      <div class="run-meta-item" style="flex:2;min-width:180px;">
+        <span class="label">Input</span>
+        <span class="run-meta-val" id="rcInput">—</span>
+      </div>
+      <div class="run-meta-item">
+        <span class="label">Output</span>
+        <span class="run-meta-val" id="rcOutput">—</span>
+      </div>
+      <div class="run-meta-item">
+        <span class="label">Model</span>
+        <input id="rcModel" readonly class="rc-model-select" list="rcModelOptions" placeholder="Model ID" aria-label="Model ID" /><datalist id="rcModelOptions"></datalist><a href="/wizard.html" id="rcProvider" style="font-size:11px;color:var(--accent);">Configure connection →</a>
+      </div>
+      <div class="run-meta-item sample-slider-wrap">
+        <span class="label">Sample N</span>
+        <div class="sample-slider-row">
+          <input type="range" class="sample-slider" id="rcSampleSlider"
+                 min="1" max="500" step="1" value="100"
+                 oninput="onSliderInput(this)" />
+          <span class="sample-slider-val" id="rcSampleVal">100</span>
+        </div>
+        <span class="sample-slider-hint" id="rcSampleHint">of — files</span>
+      </div>
+    </div>
+
+    </details>
+    <div class="run-actions">
+      <button class="run-btn primary" id="startBtn" onclick="startPipeline()">▶ Start Processing</button>
+      <button class="run-btn danger"  id="stopBtn"  onclick="stopPipeline()" style="display:none">■ Stop</button>
+      <button class="run-btn ghost"   id="downloadBtn" onclick="downloadCsv()" style="display:none">⬇ CSV</button>
+    </div>
+
+    <div class="progress-bar-wrap" id="progWrap">
+      <div class="progress-bar-fill" id="progFill"></div>
+    </div>
+    <div class="progress-txt" id="progTxt" style="display:none"></div>
+
+    <details class="run-log"><summary>Activity details</summary><div class="log-box" id="logBox"></div></details>
+
+    <div class="db-row" id="dbRow">
+      <button class="db-btn" onclick="openDashboard()">View results ↗</button>
+      <span class="label" id="dbStatus"></span>
+    </div>
+  </div>
+
+  <!-- ── Projects ── -->
+  <h1>Your Projects</h1>
+  
+
+  <div class="info-bar" id="infoBar"></div>
+  <div class="projects-grid" id="projectsGrid"></div>
+</div>
+
+<div class="modal" id="newProjectModal">
+  <div class="modal-content">
+    <h3>Create New Project</h3>
+    <div class="modal-field">
+      <label class="label" style="margin-bottom:6px;display:block;">Project Name</label>
+      <input type="text" id="newProjName" placeholder="e.g. Riverside Development" />
+    </div>
+    <div class="modal-buttons">
+      <button class="modal-btn" onclick="closeNewModal()">Cancel</button>
+      <button class="modal-btn primary" onclick="createNewProject()">Create</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Models ────────────────────────────────────────────────────────────────────
+const RC_MODELS = [
+  { id: 'google/gemini-2.5-flash',                  name: 'gemini-2.5-flash' },
+  { id: 'openai/gpt-4o-mini',                       name: 'gpt-4o-mini' },
+  { id: 'anthropic/claude-haiku-4-5',               name: 'claude-haiku-4.5' },
+  { id: 'mistralai/mistral-small-3.1-24b-instruct', name: 'mistral-small-3.1' },
+  { id: 'meta-llama/llama-3.3-70b-instruct',        name: 'llama-3.3-70b' },
+  { id: 'anthropic/claude-sonnet-4-5',              name: 'claude-sonnet-4.5' },
+  { id: 'openai/gpt-4o',                            name: 'gpt-4o' },
+];
+
+function buildModelSelect(currentModel, provider) {
+  document.getElementById('rcModel').value = currentModel || '';
+  const list = document.getElementById('rcModelOptions');
+  list.replaceChildren();
+  if (provider === 'openrouter') RC_MODELS.forEach(m => {
+    const option = document.createElement('option'); option.value = m.id; list.appendChild(option);
+  });
+  document.getElementById('rcProvider').textContent = provider + ' · Configure connection →';
+}
+
+function onModelChange(modelId) {
+  // Will be persisted when startPipeline() patches the config
+}
+
+// ── Sample slider ─────────────────────────────────────────────────────────────
+function onSliderInput(el) {
+  const max = parseInt(el.max, 10);
+  const val = parseInt(el.value, 10);
+  const isAll = val >= max;
+  document.getElementById('rcSampleVal').textContent = isAll ? 'All' : val;
+  el.style.background = isAll
+    ? 'var(--fg)'
+    : `linear-gradient(to right, var(--fg) 0%, var(--fg) ${(val - parseInt(el.min)) / (max - parseInt(el.min)) * 100}%, var(--border) ${(val - parseInt(el.min)) / (max - parseInt(el.min)) * 100}%, var(--border) 100%)`;
+}
+
+async function setSliderFromConfig(inputDir, sampleN) {
+  const slider = document.getElementById('rcSampleSlider');
+  const hint   = document.getElementById('rcSampleHint');
+  let total = null;
+  if (inputDir) {
+    try {
+      const r = await fetch('/file-count?path=' + encodeURIComponent(inputDir));
+      if (r.ok) { total = (await r.json()).count; }
+    } catch(e) {}
+  }
+  if (total != null && total > 0) {
+    slider.max = total;
+    slider.step = 1;
+    hint.textContent = 'of ' + total.toLocaleString() + ' files';
+    hint.style.color = 'var(--muted-2)';
+  } else if (total === 0) {
+    slider.max = 100;
+    hint.textContent = 'directory is empty';
+    hint.style.color = 'var(--err)';
+  } else {
+    slider.max = 500;
+    hint.textContent = inputDir ? 'path not found' : 'no project loaded';
+    hint.style.color = inputDir ? 'var(--err)' : 'var(--muted-2)';
+  }
+  const initVal = sampleN != null ? Math.min(sampleN, parseInt(slider.max)) : parseInt(slider.max);
+  slider.value = initVal;
+  onSliderInput(slider);
+}
+
+// ── Load config into Run panel ────────────────────────────────────────────────
+let dashboardPort = 5174;
+async function populateRunPanel(cfg) {
+  if (!cfg || cfg.error) return;
+  dashboardPort = cfg.dashboard?.port || 5174;
+  const p  = cfg.project    || {};
+  const pa = cfg.paths      || {};
+  const pr = cfg.processing || {};
+  document.getElementById('currentProject').textContent =
+    p.name ? p.name + (p.location ? ' · ' + p.location : '') : '(unnamed)';
+  document.getElementById('rcInput').textContent  = pa.input_dir  || '—';
+  document.getElementById('rcOutput').textContent = pa.output_csv || '—';
+  buildModelSelect(pr.model, pr.provider || (pr.base_url?.includes('vectorengine') ? 'vectorengine' : pr.base_url?.includes('deepseek') ? 'deepseek' : !pr.base_url || pr.base_url.includes('openrouter.ai') ? 'openrouter' : 'custom'));
+  await setSliderFromConfig(pa.input_dir, pr.sample_n);
+}
+
+async function loadCurrentConfig() {
+  try {
+    const r = await fetch('/load-config');
+    const cfg = await r.json();
+    await populateRunPanel(cfg);
+  } catch(e) { console.error('loadCurrentConfig', e); }
+}
+
+// Load a saved project into config.yaml then into the Run panel
+async function selectProject(name) {
+  try {
+    const response = await fetch('/activate-project', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name})});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Could not select project');
+    await populateRunPanel(data.config);
+    document.querySelectorAll('.project-card').forEach(c => c.classList.toggle('selected', c.dataset.name === name));
+    showInfo('Selected ' + name, true);
+  } catch(error) { showInfo(error.message, false); }
+}
+
+// ── Project cards ─────────────────────────────────────────────────────────────
+async function loadProjects() {
+  try {
+    const [savedRes, configRes] = await Promise.all([
+      fetch('/saved-configs'),
+      fetch('/load-config'),
+    ]);
+    const projects = await savedRes.json();
+    const currentCfg = await configRes.json();
+    renderProjects(projects, currentCfg);
+  } catch(e) { console.error('loadProjects', e); }
+}
+
+function renderProjects(projects, currentCfg) {
+  const grid = document.getElementById('projectsGrid');
+  const hasCurrent = currentCfg?.project?.name;
+
+  if (!projects.length && !hasCurrent) {
+    grid.innerHTML = `
+      <div style="grid-column:1/-1;">
+        <div style="text-align:center;padding:60px 20px;">
+          <p style="color:var(--muted);margin-bottom:20px;">No saved projects yet.</p>
+          <button class="project-card new-card" style="display:inline-flex;width:auto;padding:14px 28px;"
+                  onclick="openNewModal()">+ Create First Project</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  let extraCard = '';
+  if (hasCurrent) {
+    const p = currentCfg.project;
+    const alreadySaved = projects.some(s => s.project_name === p.name);
+    if (!alreadySaved) {
+      extraCard = `
+        <div class="project-card" style="border-style:dashed;" onclick="window.location.href='/wizard.html'">
+          <div class="card-title">${esc(p.name)}</div>
+          <div class="card-subtitle">${esc(p.location || '—')}</div>
+          <div class="card-meta" style="color:var(--muted-2);">current config · not saved as profile</div>
+          <div class="card-actions">
+            <button class="card-btn" onclick="event.stopPropagation();window.location.href='/wizard.html'">Edit</button>
+          </div>
+        </div>`;
+    }
+  }
+
+  grid.innerHTML = extraCard + projects
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    .map(p => {
+      const n = JSON.stringify(p.name);
+      return `
+      <div class="project-card ${p.project_name === currentCfg?.project?.name ? 'selected' : ''}" data-name="${esc(p.name)}" onclick='selectProject(${n})'>
+        <div class="card-title">${esc(p.name)}</div>
+        ${p.project_name && p.project_name !== p.name ? '<div class="card-subtitle">' + esc(p.project_name) + '</div>' : ''}
+        <div class="card-actions">
+          <button class="card-btn" onclick='event.stopPropagation();openProject(${n})'>Settings</button>
+          <details class="card-more" onclick="event.stopPropagation()"><summary aria-label="More project actions">More</summary><div>
+            <button class="card-btn" onclick='exportProject(${n})'>Export</button>
+            <button class="card-btn danger" onclick='deleteProject(${n})'>Delete</button>
+          </div></details>
+        </div>
+      </div>`;
+    })
+    .join('')
+    + `<div class="project-card new-card" onclick="openNewModal()">
+         <div><div style="font-size:26px;margin-bottom:6px;">+</div><div>New Project</div></div>
+       </div>`;
+}
+
+async function openProject(name) {
+  window.location.href = '/wizard.html?project=' + encodeURIComponent(name);
+}
+
+async function exportProject(name) {
+  try {
+    const r = await fetch('/saved-configs/' + encodeURIComponent(name));
+    const d = await r.json();
+    if (d.error) return;
+    const yaml = toYaml(d.config || {});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([yaml], { type: 'text/yaml' }));
+    a.download = name.replace(/[^a-z0-9_\-]/gi, '_') + '.yaml';
+    a.click();
+    showInfo('✓ Exported', true);
+  } catch { showInfo('Export failed', false); }
+}
+
+async function deleteProject(name) {
+  if (!confirm(`Delete "${name}"?`)) return;
+  try {
+    const r = await fetch('/saved-configs/' + encodeURIComponent(name), { method: 'DELETE' });
+    const d = await r.json();
+    if (d.ok) { loadProjects(); showInfo('✓ Deleted', true); }
+  } catch { showInfo('Delete failed', false); }
+}
+
+function openNewModal() {
+  document.getElementById('newProjectModal').classList.add('show');
+  setTimeout(() => document.getElementById('newProjName').focus(), 60);
+}
+function closeNewModal() {
+  document.getElementById('newProjectModal').classList.remove('show');
+  document.getElementById('newProjName').value = '';
+}
+function createNewProject() {
+  const name = document.getElementById('newProjName').value.trim();
+  if (!name) return;
+  closeNewModal();
+  window.location.href = '/wizard.html?new=' + encodeURIComponent(name);
+}
+
+// ── Pipeline ──────────────────────────────────────────────────────────────────
+const _logs = [];
+function appendLog(line) {
+  _logs.push(line);
+  if (_logs.length > 500) _logs.shift();
+  const box = document.getElementById('logBox');
+  box.textContent = _logs.join('\n');
+  box.scrollTop = box.scrollHeight;
+}
+
+function setChip(text, cls) {
+  const c = document.getElementById('statusChip');
+  c.textContent = text;
+  c.className = 'status-chip ' + cls;
+}
+
+function setProgress(pct) {
+  document.getElementById('progFill').style.width = pct + '%';
+}
+
+async function startPipeline() {
+  // Patch sample_n and model from run panel before running
+  const slider    = document.getElementById('rcSampleSlider');
+  const sliderMax = parseInt(slider.max, 10);
+  const sliderVal = parseInt(slider.value, 10);
+  const sampleN   = sliderVal >= sliderMax ? null : sliderVal;  // null = all files
+  const modelSel  = document.getElementById('rcModel');
+  const modelId   = modelSel.value.trim();
+  if (!modelId) { alert('Enter the model ID from your provider console.'); return; }
+  try {
+    const r = await fetch('/load-config');
+    const cfg = await r.json();
+    if (cfg && !cfg.error) {
+      if (!cfg.processing) cfg.processing = {};
+      cfg.processing.sample_n = sampleN;
+      cfg.processing.model    = modelId;
+      const saved = await fetch('/save-config', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cfg),
+      });
+      const result = await saved.json();
+      if (!saved.ok) throw new Error(result.error || 'Could not save connection settings');
+    } else { throw new Error('Could not load configuration'); }
+  } catch (error) { alert(error.message || 'Could not save configuration'); return; }
+
+  document.getElementById('startBtn').disabled = true;
+  try {
+    const response = await fetch('/run-pipeline', {method:'POST'});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Could not start processing');
+    await refreshRun();
+  } catch(error) { showInfo(error.message, false); document.getElementById('startBtn').disabled = false; }
+}
+let runOutput = '';
+let lastRun = '';
+async function refreshRun() {
+  try {
+    const response = await fetch('/pipeline-status');
+    if (!response.ok) throw new Error('Status unavailable');
+    const run = await response.json();
+    if (!run.run_id) return;
+    lastRun = run.run_id; runOutput = run.output_csv;
+    document.getElementById('logBox').textContent = (run.lines || []).join('\n');
+    document.getElementById('logBox').style.display = 'block';
+    document.getElementById('progWrap').style.display = 'block';
+    document.getElementById('progTxt').style.display = 'block';
+    const progress = [...(run.lines || [])].reverse().map(line => line.match(/\[(\d+)\/(\d+)\]/)).find(Boolean);
+    const label = run.running ? (run.stopped ? 'Stopping…' : 'Running') : run.stopped ? 'Stopped' : run.code === 0 ? 'Complete' : 'Failed';
+    setChip(label, run.running ? 'chip-running' : run.code === 0 ? 'chip-done' : 'chip-err');
+    setProgress(run.running ? progress ? Math.min(95, Number(progress[1])/Number(progress[2])*90) : 3 : run.code === 0 ? 100 : 0);
+    document.getElementById('progTxt').textContent = run.project + ' · ' + label + (progress ? ' · ' + progress[1] + '/' + progress[2] + ' files' : '');
+    document.getElementById('startBtn').disabled = run.running;
+    document.getElementById('stopBtn').style.display = run.running ? 'inline-block' : 'none';
+    document.getElementById('downloadBtn').style.display = !run.running && run.code === 0 ? 'inline-block' : 'none';
+    document.getElementById('dbRow').style.display = !run.running && run.code === 0 ? 'flex' : 'none';
+  } catch { if (lastRun) showInfo('Connection lost. Reconnecting to task status…', false); }
+}
+async function stopPipeline() {
+  try {
+    const response = await fetch('/stop-pipeline', {method:'POST'}); const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Could not stop');
+    await refreshRun();
+  } catch(error) { showInfo(error.message, false); }
+}
+
+function downloadCsv() { window.location = '/download-csv?name=' + encodeURIComponent(runOutput); }
+
+async function checkDashboard() {
+  try {
+    const r = await fetch('/dashboard-status?port=' + dashboardPort);
+    const d = await r.json();
+    document.getElementById('dbStatus').textContent =
+      d.running ? 'Results ready' : 'Results will open in a new tab';
+  } catch {}
+}
+
+async function openDashboard() {
+  try {
+    const r = await fetch('/launch-dashboard', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ port: dashboardPort }),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      document.getElementById('dbStatus').textContent = 'Opening…';
+      setTimeout(() => window.open(d.url + '?csv=' + encodeURIComponent(runOutput), '_blank'), d.already ? 0 : 2200);
+    }
+  } catch {}
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function showInfo(msg, ok) {
+  const bar = document.getElementById('infoBar');
+  if (ok) {
+    bar.classList.remove('show');
+    bar.textContent = '';
+    return;
+  }
+  bar.textContent = msg;
+  bar.style.borderLeftColor = 'var(--err)';
+  bar.style.color = 'var(--err)';
+  bar.classList.add('show');
+  setTimeout(() => bar.classList.remove('show'), 3000);
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function toYaml(obj, indent = 0) {
+  const pad = ' '.repeat(indent); let out = '';
+  for (const [k, val] of Object.entries(obj)) {
+    if (val === null || val === undefined || val === '') { out += `${pad}${k}:\n`; continue; }
+    if (Array.isArray(val)) {
+      if (!val.length) { out += `${pad}${k}: []\n`; continue; }
+      out += `${pad}${k}:\n`;
+      val.forEach(i => out += `${pad}- ${i}\n`);
+    } else if (typeof val === 'object') {
+      out += `${pad}${k}:\n` + toYaml(val, indent + 2);
+    } else {
+      out += `${pad}${k}: ${val}\n`;
+    }
+  }
+  return out;
+}
+
+// ── Navigation ───────────────────────────────────────────────────────────────
+function toggleHam() {
+  document.getElementById('hamMenu')?.classList.toggle('open');
+}
+
+function closeHam() {
+  document.getElementById('hamMenu')?.classList.remove('open');
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#hamBtn') && !e.target.closest('#hamMenu')) {
+    closeHam();
+  }
+});
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadCurrentConfig(); await loadProjects(); await refreshRun();
+  const params = new URLSearchParams(location.search);
+  if (params.has('saved')) showInfo('Project and taxonomy saved', true);
+  if (params.has('run')) { history.replaceState(null, '', '/'); await startPipeline(); }
+  setInterval(refreshRun, 1500);
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('newProjectModal').classList.contains('show')) {
+    closeNewModal();
+  }
+  const tag = document.activeElement?.tagName;
+  if (e.key === 'd' && tag !== 'INPUT' && tag !== 'TEXTAREA') {
+    window.open('/results-ui', '_blank');
+  }
+});
+document.getElementById('newProjectModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeNewModal();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+SYNTHETIC DEMO — illustrative training case, not an authentic project record.
+
+
+NOISE AND AIR QUALITY ASSESSMENT — ILLUSTRATIVE SCREENING
+
+This synthetic screening tests the edge condition along the east service road. Indicative daytime noise is 61 dB LAeq at the residential frontage, with a hypothetical nitrogen dioxide screening value of 28 micrograms per cubic metre near the bus turning area. These values are fabricated and not suitable for compliance.
+
+DESIGN RESPONSE TO TEST
+
+Consider a planted setback, low-speed service access, active ground-floor uses with acoustic lobbies, and a construction logistics plan that protects school routes. Confirm the baseline with accredited measurements before any planning application.
+
+Open question: can the blue-green connector provide meaningful separation without reducing passive surveillance or accessible route directness?

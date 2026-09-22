@@ -1,0 +1,14 @@
+SYNTHETIC DEMO — illustrative training case, not an authentic project record.
+
+
+STRUCTURAL CONDITION SURVEY — SYNTHETIC PILOT
+
+The illustrative inspection covers tower B-T02 and records cracking at two balcony slab edges, corrosion risk at exposed reinforcement, and uncertain records for a former entrance canopy. No element is declared unsafe by this demonstration document; the observations are prompts for a real engineer’s investigation.
+
+RISK-BASED RECOMMENDATION
+
+Retain the primary frame subject to intrusive inspection, carbonation testing, reinforcement cover checks, and load-path verification. Prioritise the north facade repair pilot before adding new balcony loads or changing the entrance canopy.
+
+DECISION IMPACT
+
+This file is expected to receive a Hard Constraint authority grade and Single Discipline scope, with Medium certainty because the evidence is a limited visual survey rather than a complete structural assessment.

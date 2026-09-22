@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataTaxonomy — Taxonomy Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
+<style>
+  :root {
+    --bg:          #FAFAF8;
+    --surface:     #FFFFFF;
+    --surface-2:   #F5F4F0;
+    --hover:       #F0EEE8;
+    --fg:          #1C1C1E;
+    --fg-2:        #2E2E32;
+    --muted:       #6B6B6B;
+    --muted-2:     #9A9A9A;
+    --border:      #E8E4DC;
+    --hairline:    #E8E4DC;
+    --hairline-s:  #F0EDE5;
+    --accent:      #C7522A;
+    --accent-2:    #B4451F;
+    --err:    var(--prio-critical-fg);
+    --ok:     var(--prio-low-fg);
+    --prio-critical-fg: #DC2626; --prio-critical-bg: #FEF2F2;
+    --prio-high-fg:     #EA580C; --prio-high-bg:     #FFF7ED;
+    --prio-medium-fg:   #CA8A04; --prio-medium-bg:   #FEFCE8;
+    --prio-low-fg:      #16A34A; --prio-low-bg:      #F0FDF4;
+    --shadow-1:    0 1px 2px rgba(28,28,30,0.04);
+    --shadow-2:    0 4px 12px rgba(28,28,30,0.06);
+    --r-1: 4px; --r-2: 6px; --r-3: 8px; --r-pill: 999px;
+    --focus-ring: 0 0 0 3px rgba(199,82,42,0.18);
+    --sidebar-w: 240px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg); color: var(--fg);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 300; font-size: 13px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased; height: 100vh; overflow: hidden;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+  }
+
+  /* ── Layout ── */
+  .app { display: flex; flex-direction: column; height: 100vh; }
+
+  header.topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 32px; height: 52px;
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-1);
+    background: var(--surface); flex-shrink: 0; gap: 24px;
+  }
+  .brand { font-family: 'JetBrains Mono'; font-size: 12px; letter-spacing: 0.08em; }
+  .brand b { font-weight: 500; }
+  .nav-links { display: flex; gap: 20px; align-items: center; }
+  .nav-link {
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); text-decoration: none;
+    border-bottom: 1px solid transparent; transition: all .15s;
+  }
+  .nav-link:hover { color: var(--accent); border-color: var(--accent); }
+  /* ── Hamburger nav ── */
+  .ham-wrap { position: relative; display: flex; align-items: center; }
+  .ham-btn {
+    width: 30px; height: 30px; border: 1px solid var(--hairline); border-radius: 10px;
+    background: var(--surface-2); cursor: pointer; padding: 0;
+    display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center;
+    transition: border-color .2s, background .2s;
+  }
+  .ham-btn:hover { border-color: var(--fg); background: var(--hover); }
+  .ham-btn span { display: block; width: 12px; height: 1px; background: var(--fg); }
+  .ham-menu {
+    position: absolute; top: calc(100% + 10px); right: 0;
+    width: 220px; background: rgba(255,255,255,.98); border: 1px solid var(--hairline);
+    border-radius: 12px; box-shadow: 0 12px 28px rgba(0,0,0,.08); padding: 6px;
+    display: none; z-index: 50;
+  }
+  .ham-menu.open { display: block; }
+  .ham-item {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 8px 10px; border-radius: 8px; color: var(--muted);
+    font-family: 'JetBrains Mono'; font-size: 9px; letter-spacing: .12em;
+    text-transform: uppercase; text-decoration: none; transition: background .15s, color .15s;
+  }
+  .ham-item:hover { background: var(--bg); color: var(--fg); }
+  .ham-icon { font-family: 'JetBrains Mono'; font-size: 9px; color: var(--muted); min-width: 18px; text-align: center; }
+  .ham-sep { height: 1px; background: var(--hairline); margin: 4px 0; }
+
+  .body { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: var(--sidebar-w); border-right: 1px solid var(--hairline);
+    background: var(--surface); display: flex; flex-direction: column;
+    flex-shrink: 0; overflow: hidden;
+  }
+  .sidebar-header {
+    padding: 16px 16px 12px; border-bottom: 1px solid var(--hairline);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .preset-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .preset-item {
+    padding: 8px 16px; display: flex; align-items: center;
+    justify-content: space-between; gap: 8px; cursor: pointer;
+    border-left: 2px solid transparent; transition: all .15s;
+  }
+  .preset-item:hover { background: var(--hover); }
+  .preset-item.active { border-left-color: var(--fg); background: var(--hover); }
+  .preset-item .preset-name {
+    font-family: 'JetBrains Mono'; font-size: 11px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; flex: 1;
+  }
+  .preset-item .preset-del {
+    color: var(--muted-2); cursor: pointer; font-size: 14px; line-height: 1;
+    border: none; background: none; padding: 0 2px; flex-shrink: 0;
+  }
+  .preset-item .preset-del:hover { color: var(--err); }
+
+  /* ── Main editor ── */
+  .editor { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .editor-topbar {
+    padding: 12px 24px; border-bottom: 1px solid var(--hairline);
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    background: var(--surface);
+  }
+  .name-input {
+    flex: 1; border: none; border-bottom: 1px solid var(--hairline);
+    padding: 6px 0; font-family: 'JetBrains Mono'; font-size: 13px;
+    color: var(--fg); background: transparent; max-width: 280px;
+  }
+  .name-input:focus { outline: none; border-bottom-color: var(--fg); }
+  .name-input::placeholder { color: var(--muted-2); }
+
+  .btn {
+    padding: 6px 14px; border: 1px solid var(--hairline); background: transparent;
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.05em;
+    cursor: pointer; color: var(--muted); transition: all .15s; white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--fg); color: var(--fg); }
+  .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn.primary:hover { background: var(--accent-2); border-color: var(--accent-2); }
+  .btn.danger:hover { border-color: var(--err); color: var(--err); }
+
+  /* ── Section tabs ── */
+  .section-tabs {
+    display: flex; border-bottom: 1px solid var(--hairline);
+    padding: 0 24px; background: var(--surface); flex-shrink: 0; gap: 0;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 10px 14px; font-family: 'JetBrains Mono'; font-size: 10px;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all .15s; white-space: nowrap;
+  }
+  .tab:hover { color: var(--fg); }
+  .tab.active { color: var(--fg); border-bottom-color: var(--fg); }
+  .tab .count {
+    margin-left: 5px; font-size: 9px; color: var(--muted-2);
+    background: var(--hover); padding: 1px 5px; border-radius: 8px;
+  }
+
+  /* ── Rows ── */
+  .section-body { flex: 1; overflow-y: auto; padding: 16px 24px 80px; }
+
+  .row-header {
+    display: grid; grid-template-columns: 1fr 2fr 28px;
+    gap: 8px; padding: 0 0 6px; margin-bottom: 4px;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .item-row {
+    display: grid; grid-template-columns: 1fr 2fr 28px;
+    gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--hairline);
+    align-items: start;
+  }
+  .item-row:last-of-type { border-bottom: none; }
+
+  .field {
+    border: none; border-bottom: 1px solid transparent;
+    padding: 4px 0; font-family: 'Inter'; font-size: 12px; font-weight: 300;
+    color: var(--fg); background: transparent; width: 100%; resize: none;
+    line-height: 1.4;
+  }
+  .field:focus { outline: none; border-bottom-color: var(--muted); }
+  .field.name-field { font-family: 'JetBrains Mono'; font-size: 11px; }
+
+  .del-btn {
+    border: none; background: none; color: var(--muted-2); cursor: pointer;
+    font-size: 15px; line-height: 1; padding: 4px 0; text-align: center;
+    transition: color .15s; align-self: start; margin-top: 3px;
+  }
+  .del-btn:hover { color: var(--err); }
+
+  .add-row-btn {
+    margin-top: 16px; padding: 7px 14px; border: 1px dashed var(--hairline);
+    background: transparent; font-family: 'JetBrains Mono'; font-size: 10px;
+    letter-spacing: 0.05em; cursor: pointer; color: var(--muted);
+    transition: all .15s; width: 100%;
+  }
+  .add-row-btn:hover { border-color: var(--fg); color: var(--fg); border-style: solid; }
+
+  /* ── Empty / toast ── */
+  .empty-editor {
+    display: flex; align-items: center; justify-content: center;
+    flex: 1; flex-direction: column; gap: 12px; color: var(--muted);
+  }
+  .empty-editor p { font-size: 14px; }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; padding: 10px 16px;
+    background: var(--fg); color: var(--bg); font-family: 'JetBrains Mono';
+    font-size: 11px; opacity: 0; transition: opacity .2s; pointer-events: none;
+    z-index: 999;
+  }
+  .toast.show { opacity: 1; }
+
+  #importFile { display: none; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">Data Taxonomy / <b>Taxonomy Editor</b></div>
+    <div class="nav-links">
+      <div class="ham-wrap">
+        <button class="ham-btn" id="hamBtn" onclick="toggleHam()" aria-label="Navigation menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="ham-menu" id="hamMenu">
+          <a class="ham-item" href="/">
+            <span class="ham-icon">01</span><span>Projects</span>
+          </a>
+          <a class="ham-item" href="/wizard.html">
+            <span class="ham-icon">02</span><span>Config Wizard</span>
+          </a>
+          <a class="ham-item" href="/taxonomy-editor">
+            <span class="ham-icon">03</span><span>Taxonomy Editor</span>
+          </a>
+          <div class="ham-sep"></div>
+          <a class="ham-item" href="/results-ui" target="_blank">
+            <span class="ham-icon">↗</span><span>Dashboard</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="body">
+    <!-- Sidebar: preset list -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <span class="label">Presets</span>
+        <button class="btn" onclick="newTaxonomy()">+ New</button>
+      </div>
+      <div class="preset-list" id="presetList"></div>
+    </div>
+
+    <!-- Main editor -->
+    <div class="editor" id="editorArea">
+      <div class="empty-editor" id="emptyState">
+        <p>Select a preset or create a new taxonomy</p>
+        <button class="btn" onclick="newTaxonomy()">+ New Taxonomy</button>
+      </div>
+
+      <div id="editorMain" style="display:none; flex-direction:column; flex:1; overflow:hidden;">
+        <div class="editor-topbar">
+          <input class="name-input mono" id="taxName" placeholder="taxonomy-name" spellcheck="false" />
+          <button class="btn primary" onclick="savePreset()">Save</button>
+          <button class="btn" onclick="exportYaml()">Export .yaml</button>
+          <button class="btn" onclick="document.getElementById('importFile').click()">Import .yaml</button>
+          <input type="file" id="importFile" accept=".yaml,.yml" onchange="importYaml(event)" />
+        </div>
+
+        <div class="section-tabs" id="sectionTabs"></div>
+        <div class="section-body" id="sectionBody"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Section definitions ────────────────────────────────────────────────────
+const SECTIONS = [
+  { key: 'domains',               label: 'Domains' },
+  { key: 'asset_types',           label: 'Asset Types' },
+  { key: 'lifecycle_stages',      label: 'Lifecycle' },
+  { key: 'scales',                label: 'Scales' },
+  { key: 'information_types',     label: 'Info Types' },
+  { key: 'governance_sources',    label: 'Governance' },
+  { key: 'confidentiality_levels',label: 'Confidentiality' },
+];
+
+// ── State ──────────────────────────────────────────────────────────────────
+let taxonomy = {};       // current in-memory taxonomy
+let activeSection = SECTIONS[0].key;
+let activePreset  = null;
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ── Preset list ────────────────────────────────────────────────────────────
+async function loadPresetList() {
+  const res  = await fetch('/list-taxonomies');
+  const names = await res.json();
+  const list = document.getElementById('presetList');
+  list.innerHTML = names.length ? '' : '<div style="padding:16px;color:var(--muted-2);font-size:11px;">No presets saved yet</div>';
+  names.forEach(name => {
+    const item = document.createElement('div');
+    item.className = 'preset-item' + (name === activePreset ? ' active' : '');
+    item.innerHTML = `
+      <span class="preset-name">${name}</span>
+      <button class="preset-del" title="Delete" onclick="deletePreset(event,'${name}')">×</button>
+    `;
+    item.addEventListener('click', () => loadPreset(name));
+    list.appendChild(item);
+  });
+}
+
+async function loadPreset(name) {
+  const res  = await fetch(`/read-taxonomy/${encodeURIComponent(name)}`);
+  const data = await res.json();
+  if (data.error) { toast('Error: ' + data.error); return; }
+  taxonomy     = data;
+  activePreset = name;
+  document.getElementById('taxName').value = name;
+  showEditor();
+  renderTabs();
+  renderSection(activeSection);
+  loadPresetList();
+}
+
+async function deletePreset(e, name) {
+  e.stopPropagation();
+  if (!confirm(`Delete preset "${name}"?`)) return;
+  await fetch(`/delete-taxonomy/${encodeURIComponent(name)}`, { method: 'DELETE' });
+  if (activePreset === name) { newTaxonomy(); }
+  loadPresetList();
+  toast(`Deleted "${name}"`);
+}
+
+// ── Editor ─────────────────────────────────────────────────────────────────
+function newTaxonomy() {
+  taxonomy     = buildEmpty();
+  activePreset = null;
+  document.getElementById('taxName').value = '';
+  showEditor();
+  renderTabs();
+  renderSection(activeSection);
+  loadPresetList();
+}
+
+function buildEmpty() {
+  const t = {};
+  SECTIONS.forEach(s => { t[s.key] = []; });
+  return t;
+}
+
+function showEditor() {
+  document.getElementById('emptyState').style.display  = 'none';
+  document.getElementById('editorMain').style.display  = 'flex';
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+function renderTabs() {
+  const bar = document.getElementById('sectionTabs');
+  bar.innerHTML = SECTIONS.map(s => {
+    const count = (taxonomy[s.key] || []).length;
+    return `<div class="tab ${s.key === activeSection ? 'active' : ''}"
+                 onclick="switchSection('${s.key}')">
+              ${s.label}<span class="count">${count}</span>
+            </div>`;
+  }).join('');
+}
+
+function switchSection(key) {
+  flushCurrentSection();
+  activeSection = key;
+  renderTabs();
+  renderSection(key);
+}
+
+// ── Section rendering ──────────────────────────────────────────────────────
+function renderSection(key) {
+  const items = taxonomy[key] || [];
+  const body  = document.getElementById('sectionBody');
+  body.innerHTML = `
+    <div class="row-header">
+      <span class="label">Name</span>
+      <span class="label">Description</span>
+      <span></span>
+    </div>
+    ${items.map((item, i) => rowHtml(key, i, item)).join('')}
+    <button class="add-row-btn" onclick="addRow('${key}')">+ Add item</button>
+  `;
+}
+
+function rowHtml(key, i, item) {
+  return `
+    <div class="item-row" data-key="${key}" data-idx="${i}">
+      <input  class="field name-field" data-field="name"
+              value="${esc(item.name || '')}"
+              placeholder="name" spellcheck="false" />
+      <textarea class="field" data-field="description"
+                placeholder="description" rows="1"
+                oninput="autoResize(this)">${esc(item.description || '')}</textarea>
+      <button class="del-btn" onclick="deleteRow('${key}',${i})" title="Remove">×</button>
+    </div>`;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+// ── Flush changes from DOM back to taxonomy state ──────────────────────────
+function flushCurrentSection() {
+  const rows = document.querySelectorAll(`.item-row[data-key="${activeSection}"]`);
+  taxonomy[activeSection] = Array.from(rows).map(row => ({
+    name:        row.querySelector('[data-field="name"]').value.trim(),
+    description: row.querySelector('[data-field="description"]').value.trim(),
+  })).filter(item => item.name);
+}
+
+function addRow(key) {
+  flushCurrentSection();
+  if (!taxonomy[key]) taxonomy[key] = [];
+  taxonomy[key].push({ name: '', description: '' });
+  renderSection(key);
+  renderTabs();
+  // Focus the new name input
+  const rows = document.querySelectorAll('.item-row');
+  if (rows.length) rows[rows.length - 1].querySelector('[data-field="name"]').focus();
+}
+
+function deleteRow(key, idx) {
+  flushCurrentSection();
+  taxonomy[key].splice(idx, 1);
+  renderSection(key);
+  renderTabs();
+}
+
+// ── Save preset ────────────────────────────────────────────────────────────
+async function savePreset() {
+  flushCurrentSection();
+  const name = document.getElementById('taxName').value.trim();
+  if (!name) { toast('Enter a name before saving'); return; }
+
+  const res  = await fetch('/save-taxonomy-as', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ name, taxonomy }),
+  });
+  const data = await res.json();
+  if (data.error) { toast('Error: ' + data.error); return; }
+  activePreset = data.name;
+  loadPresetList();
+  toast(`Saved as "${data.name}"`);
+}
+
+// ── Export ─────────────────────────────────────────────────────────────────
+function exportYaml() {
+  flushCurrentSection();
+  const name = document.getElementById('taxName').value.trim() || 'taxonomy';
+  const yaml = jsyaml.dump(taxonomy, { lineWidth: 120, noRefs: true });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(new Blob([yaml], { type: 'text/yaml' }));
+  a.download = name + '.yaml';
+  a.click();
+  toast('Exported ' + name + '.yaml');
+}
+
+// ── Import ─────────────────────────────────────────────────────────────────
+function importYaml(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = jsyaml.load(ev.target.result);
+      if (!data || typeof data !== 'object') throw new Error('Invalid YAML');
+      taxonomy = data;
+      // Set name from filename (strip extension)
+      const stem = file.name.replace(/\.(yaml|yml)$/i, '');
+      document.getElementById('taxName').value = stem;
+      activePreset = null;
+      showEditor();
+      activeSection = SECTIONS[0].key;
+      renderTabs();
+      renderSection(activeSection);
+      toast(`Imported "${file.name}"`);
+    } catch (err) {
+      toast('Import failed: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+loadPresetList();
+
+/* ── Hamburger ── */
+function toggleHam() { document.getElementById('hamMenu').classList.toggle('open'); }
+document.addEventListener('click', e => {
+  if (!e.target.closest('#hamBtn') && !e.target.closest('#hamMenu'))
+    document.getElementById('hamMenu')?.classList.remove('open');
+});
+</script>
+</body>
+</html>

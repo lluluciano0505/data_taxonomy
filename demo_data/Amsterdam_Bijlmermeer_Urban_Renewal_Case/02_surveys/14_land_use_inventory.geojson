@@ -1,0 +1,112 @@
+{
+  "synthetic_demo_notice": "SYNTHETIC DEMO — illustrative training case, not an authentic project record.",
+  "type": "FeatureCollection",
+  "name": "synthetic_bijlmermeer_land_use_inventory",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "use": "residential tower",
+        "building_id": "B-T01",
+        "status": "synthetic"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              4.955,
+              52.315
+            ],
+            [
+              4.956,
+              52.315
+            ],
+            [
+              4.956,
+              52.3157
+            ],
+            [
+              4.955,
+              52.3157
+            ],
+            [
+              4.955,
+              52.315
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "use": "green corridor",
+        "name": "Blue-Green Spine",
+        "status": "synthetic"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              4.9565,
+              52.3147
+            ],
+            [
+              4.959,
+              52.3147
+            ],
+            [
+              4.959,
+              52.3152
+            ],
+            [
+              4.9565,
+              52.3152
+            ],
+            [
+              4.9565,
+              52.3147
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "use": "surface parking",
+        "name": "East Court",
+        "status": "synthetic"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              4.9585,
+              52.3155
+            ],
+            [
+              4.96,
+              52.3155
+            ],
+            [
+              4.96,
+              52.3162
+            ],
+            [
+              4.9585,
+              52.3162
+            ],
+            [
+              4.9585,
+              52.3155
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

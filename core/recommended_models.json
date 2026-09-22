@@ -1,0 +1,480 @@
+{
+  "openrouter": {
+    "models": [
+      {
+        "id": "openai/gpt-5.2",
+        "name": "OpenAI: GPT-5.2",
+        "tier": "higher",
+        "chat_tested_on": null,
+        "region_blocked": true,
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 1.75,
+          "output_per_million_usd": 14.0
+        }
+      },
+      {
+        "id": "openai/gpt-5-mini",
+        "name": "OpenAI: GPT-5 Mini",
+        "tier": "budget",
+        "chat_tested_on": null,
+        "region_blocked": true,
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.25,
+          "output_per_million_usd": 2.0
+        }
+      },
+      {
+        "id": "openai/gpt-5-nano",
+        "name": "OpenAI: GPT-5 Nano",
+        "tier": "budget",
+        "chat_tested_on": null,
+        "region_blocked": true,
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.05,
+          "output_per_million_usd": 0.4
+        }
+      },
+      {
+        "id": "openai/gpt-4.1-mini",
+        "name": "OpenAI: GPT-4.1 Mini",
+        "tier": "budget",
+        "chat_tested_on": null,
+        "region_blocked": true,
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.4,
+          "output_per_million_usd": 1.6
+        }
+      },
+      {
+        "id": "openai/gpt-4o",
+        "name": "OpenAI: GPT-4o",
+        "tier": "higher",
+        "chat_tested_on": null,
+        "region_blocked": true,
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 2.5,
+          "output_per_million_usd": 10.0
+        }
+      },
+      {
+        "id": "openai/gpt-4o-mini",
+        "name": "OpenAI: GPT-4o-mini",
+        "tier": "budget",
+        "chat_tested_on": null,
+        "region_blocked": true,
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.15,
+          "output_per_million_usd": 0.6
+        }
+      },
+      {
+        "id": "anthropic/claude-opus-4.8",
+        "name": "Anthropic: Claude Opus 4.8",
+        "tier": "higher",
+        "chat_tested_on": null,
+        "region_blocked": true,
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 5.0,
+          "output_per_million_usd": 25.0
+        }
+      },
+      {
+        "id": "anthropic/claude-sonnet-5",
+        "name": "Anthropic: Claude Sonnet 5",
+        "tier": "higher",
+        "chat_tested_on": null,
+        "region_blocked": true,
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 2.0,
+          "output_per_million_usd": 10.0
+        }
+      },
+      {
+        "id": "anthropic/claude-haiku-4.5",
+        "name": "Anthropic: Claude Haiku 4.5",
+        "tier": "higher",
+        "chat_tested_on": null,
+        "region_blocked": true,
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 1.0,
+          "output_per_million_usd": 5.0
+        }
+      },
+      {
+        "id": "google/gemini-3.1-pro-preview",
+        "name": "Google: Gemini 3.1 Pro Preview",
+        "tier": "higher",
+        "chat_tested_on": null,
+        "region_blocked": true,
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 2.0,
+          "output_per_million_usd": 12.0
+        }
+      },
+      {
+        "id": "google/gemini-2.5-pro",
+        "name": "Google: Gemini 2.5 Pro",
+        "tier": "higher",
+        "chat_tested_on": null,
+        "region_blocked": true,
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 1.25,
+          "output_per_million_usd": 10.0
+        }
+      },
+      {
+        "id": "google/gemini-2.5-flash",
+        "name": "Google: Gemini 2.5 Flash",
+        "tier": "budget",
+        "chat_tested_on": null,
+        "region_blocked": true,
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.3,
+          "output_per_million_usd": 2.5
+        }
+      },
+      {
+        "id": "google/gemini-2.5-flash-lite",
+        "name": "Google: Gemini 2.5 Flash Lite",
+        "tier": "budget",
+        "chat_tested_on": null,
+        "region_blocked": true,
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.1,
+          "output_per_million_usd": 0.4
+        }
+      },
+      {
+        "id": "x-ai/grok-4.6",
+        "name": "xAI: Grok 4.6",
+        "tier": "higher",
+        "chat_tested_on": "2026-09-21",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 2.0,
+          "output_per_million_usd": 6.0
+        }
+      },
+      {
+        "id": "moonshotai/kimi-k2.6",
+        "name": "MoonshotAI: Kimi K2.6",
+        "tier": "higher",
+        "chat_tested_on": "2026-09-21",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.95,
+          "output_per_million_usd": 4.0
+        }
+      },
+      {
+        "id": "moonshotai/kimi-k2.5",
+        "name": "MoonshotAI: Kimi K2.5",
+        "tier": "budget",
+        "chat_tested_on": "2026-09-21",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.45,
+          "output_per_million_usd": 2.25
+        }
+      },
+      {
+        "id": "deepseek/deepseek-v4.1-flash",
+        "name": "DeepSeek: DeepSeek V4.1 Flash",
+        "tier": "budget",
+        "chat_tested_on": "2026-09-21",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.3,
+          "output_per_million_usd": 1.2
+        }
+      },
+      {
+        "id": "qwen/qwen3.7-flash",
+        "name": "Qwen: Qwen3.7 Flash",
+        "tier": "budget",
+        "chat_tested_on": "2026-09-21",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.03,
+          "output_per_million_usd": 0.13
+        }
+      },
+      {
+        "id": "qwen/qwen3.6-plus",
+        "name": "Qwen: Qwen3.6 Plus",
+        "tier": "budget",
+        "chat_tested_on": "2026-09-21",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.325,
+          "output_per_million_usd": 1.95
+        }
+      },
+      {
+        "id": "qwen/qwen3.5-plus-02-15",
+        "name": "Qwen: Qwen3.5 Plus",
+        "tier": "budget",
+        "chat_tested_on": "2026-09-21",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.26,
+          "output_per_million_usd": 1.56
+        }
+      },
+      {
+        "id": "minimax/minimax-m3",
+        "name": "MiniMax: MiniMax M3",
+        "tier": "budget",
+        "chat_tested_on": "2026-09-21",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.3,
+          "output_per_million_usd": 1.2
+        }
+      },
+      {
+        "id": "amazon/nova-lite-v1",
+        "name": "Amazon: Nova Lite 1.0",
+        "tier": "budget",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.06,
+          "output_per_million_usd": 0.24
+        }
+      },
+      {
+        "id": "google/gemma-3-27b-it",
+        "name": "Google: Gemma 3 27B",
+        "tier": "budget",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.08,
+          "output_per_million_usd": 0.45
+        }
+      },
+      {
+        "id": "meta-llama/llama-4-scout",
+        "name": "Meta: Llama 4 Scout",
+        "tier": "budget",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.1,
+          "output_per_million_usd": 0.3
+        }
+      },
+      {
+        "id": "mistralai/mistral-small-3.2-24b-instruct",
+        "name": "Mistral: Mistral Small 3.2 24B",
+        "tier": "budget",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.0938,
+          "output_per_million_usd": 0.25
+        }
+      },
+      {
+        "id": "qwen/qwen3-vl-8b-instruct",
+        "name": "Qwen: Qwen3 VL 8B Instruct",
+        "tier": "budget",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.117,
+          "output_per_million_usd": 0.455
+        }
+      },
+      {
+        "id": "amazon/nova-pro-v1",
+        "name": "Amazon: Nova Pro 1.0",
+        "tier": "higher",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.8,
+          "output_per_million_usd": 3.2
+        }
+      },
+      {
+        "id": "mistralai/mistral-medium-3.1",
+        "name": "Mistral: Mistral Medium 3.1",
+        "tier": "higher",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.4,
+          "output_per_million_usd": 2.0
+        }
+      },
+      {
+        "id": "qwen/qwen2.5-vl-72b-instruct",
+        "name": "Qwen: Qwen2.5 VL 72B Instruct",
+        "tier": "higher",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.8,
+          "output_per_million_usd": 1.0
+        }
+      },
+      {
+        "id": "mistralai/mistral-large-2512",
+        "name": "Mistral: Mistral Large 3 2512",
+        "tier": "higher",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.5,
+          "output_per_million_usd": 1.5
+        }
+      },
+      {
+        "id": "qwen/qwen3-vl-235b-a22b-instruct",
+        "name": "Qwen: Qwen3 VL 235B A22B Instruct",
+        "tier": "higher",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_per_million_usd": 0.21,
+          "output_per_million_usd": 1.9
+        }
+      }
+    ],
+    "pricing_checked_on": "2026-09-21",
+    "pricing_source": "https://openrouter.ai/api/v1/models",
+    "pricing_note": "USD per million tokens; prices can change."
+  },
+  "vectorengine": {
+    "models": [
+      {
+        "id": "gpt-4o-mini",
+        "name": "gpt-4o-mini",
+        "tier": "budget",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_ratio": 0.075,
+          "output_ratio": 0.3
+        }
+      },
+      {
+        "id": "gpt-4.1-nano",
+        "name": "gpt-4.1-nano",
+        "tier": "budget",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_ratio": 0.05,
+          "output_ratio": 0.2
+        }
+      },
+      {
+        "id": "gpt-4.1-mini",
+        "name": "gpt-4.1-mini",
+        "tier": "budget",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_ratio": 0.2,
+          "output_ratio": 0.8
+        }
+      },
+      {
+        "id": "qwen3-vl-flash",
+        "name": "qwen3-vl-flash",
+        "tier": "budget",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_ratio": 0.075,
+          "output_ratio": 0.75
+        }
+      },
+      {
+        "id": "qwen3-vl-8b-instruct",
+        "name": "qwen3-vl-8b-instruct",
+        "tier": "budget",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_ratio": 0.25,
+          "output_ratio": 1.0
+        }
+      },
+      {
+        "id": "gpt-4.1",
+        "name": "gpt-4.1",
+        "tier": "higher",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_ratio": 1,
+          "output_ratio": 4
+        }
+      },
+      {
+        "id": "gpt-4o",
+        "name": "gpt-4o",
+        "tier": "higher",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_ratio": 1.25,
+          "output_ratio": 5.0
+        }
+      },
+      {
+        "id": "claude-haiku-4-5-20251001",
+        "name": "claude-haiku-4-5-20251001",
+        "tier": "higher",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_ratio": 0.5,
+          "output_ratio": 2.5
+        }
+      },
+      {
+        "id": "claude-sonnet-4-6",
+        "name": "claude-sonnet-4-6",
+        "tier": "higher",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_ratio": 1.5,
+          "output_ratio": 7.5
+        }
+      },
+      {
+        "id": "qwen-vl-max",
+        "name": "qwen-vl-max",
+        "tier": "higher",
+        "chat_tested_on": "2026-09-16",
+        "vision_listed": true,
+        "pricing": {
+          "input_ratio": 0.8,
+          "output_ratio": 2.0
+        }
+      }
+    ],
+    "pricing_checked_on": "2026-09-16",
+    "pricing_source": "https://api.vectorengine.ai/api/pricing",
+    "pricing_note": "Relative tiers use published base token ratios. Actual charges depend on your token group, context length and provider pricing."
+  }
+}

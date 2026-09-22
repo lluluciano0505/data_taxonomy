@@ -1,0 +1,24 @@
+# User secrets and local configuration
+.env
+config.yaml
+
+# User-generated project data
+outputs/
+logs/
+saved_configs.json
+.reviewed_files.json
+*.csv
+*.csv.*
+*.run.json
+*.taxonomy.yaml
+*.bak
+
+# Local Python environment and caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Operating-system files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,22 @@
+{
+  "synthetic_demo_notice": "SYNTHETIC DEMO — illustrative training case, not an authentic project record.",
+  "project": "Amsterdam Bijlmermeer Urban Renewal Case",
+  "location": "Amsterdam Zuidoost, representative Bijlmermeer Cluster B",
+  "status": "synthetic training case",
+  "illustrative_only": true,
+  "study_area_ha": 28,
+  "existing_homes": 420,
+  "potential_new_homes": 180,
+  "concept_phase": "Concept / Schematic",
+  "assumptions": [
+    "All people, organisations, boundaries, dates, metrics, costs, and decisions in this folder are fabricated.",
+    "Public historical themes are used only to make the archive realistic for a classification demonstration.",
+    "No file is evidence for an actual planning, procurement, safety, or environmental decision."
+  ],
+  "classification_learning_goals": [
+    "distinguish data assets from narrative documents",
+    "identify statutory and hard-constraint evidence",
+    "surface low-confidence or metadata-only files for review",
+    "rank files by authority, scope, and coverage"
+  ]
+}

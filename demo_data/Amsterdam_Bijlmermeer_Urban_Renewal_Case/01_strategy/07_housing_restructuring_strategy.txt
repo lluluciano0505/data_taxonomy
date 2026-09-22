@@ -1,0 +1,14 @@
+SYNTHETIC DEMO — illustrative training case, not an authentic project record.
+
+
+HOUSING RESTRUCTURING STRATEGY
+
+The hypothetical strategy tests a mixed-tenure repair model for 420 existing homes and 180 potential new homes. Existing residents are assumed to receive a continuity option before any intrusive works. New mid-rise frontage blocks are considered only where they improve the public realm, protect mature trees, and do not create an unresolvable daylight or wind condition.
+
+OPTION TESTS
+
+Option A — repair only: lowest displacement risk, limited tenure diversification, and weak street activation.
+Option B — repair plus edge infill: moderate construction complexity, stronger mixed-use frontage, and the most balanced social and spatial outcome.
+Option C — replacement cluster: potentially high energy performance, but high embodied carbon, displacement, and memory risk.
+
+The concept recommendation is Option B for further testing. This is not a real housing policy or feasibility study. Tenure shares, household counts, rents, and delivery assumptions are illustrative placeholders for archive classification.

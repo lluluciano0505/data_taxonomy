@@ -1,0 +1,14 @@
+SYNTHETIC DEMO — illustrative training case, not an authentic project record.
+
+
+GEOTECHNICAL DESKTOP STUDY
+
+This synthetic note uses an illustrative soil profile: made ground over compressible peat and clay, with dense sand assumed at approximately 11 metres below reference level. The values are placeholders for testing how DataTaxonomy distinguishes a technical hard constraint from a general narrative.
+
+DESIGN SIGNALS
+
+New edge buildings may require pile foundations or a lightweight alternative. Surface drainage and tree pits must avoid creating differential settlement at existing entrances. A staged intrusive investigation is needed at the proposed community hub, rain garden basins, and any new lift core.
+
+RECOMMENDED NEXT EVIDENCE
+
+Commission boreholes, cone penetration tests, groundwater monitoring, and a contamination screen. No foundation type, excavation depth, or structural grid should be treated as final based on this desktop note alone.

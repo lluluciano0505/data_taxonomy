@@ -1,0 +1,17 @@
+SYNTHETIC DEMO — illustrative training case, not an authentic project record.
+
+
+HISTORICAL CONTEXT NOTE
+
+Bijlmermeer was planned in the post-war period as a large-scale modernist extension of Amsterdam, known for high-rise housing, separation of traffic modes, generous communal landscape, and distinctive infrastructure. Public accounts also connect the area to later renewal, changing housing demand, social inequalities, and the 4 October 1992 cargo-plane disaster in which a Boeing 747 crashed into the Groeneveen and Kruitberg high-rise complex.
+
+For this synthetic case, history is treated as design context rather than as a complete historical record. The hypothetical project does not assert a new interpretation of the disaster or reproduce archival testimony. It asks how a renewal team can acknowledge memory, preserve resident continuity, and improve physical conditions while working with inherited structures and landscapes.
+
+ARCHIVE QUESTIONS FOR THE TEAM
+
+- Which spaces should remain legible as collective memory landscapes?
+- What evidence distinguishes an original planning intention from a later adaptation?
+- How can new street edges connect to the elevated and ground-level movement systems without erasing the area’s identity?
+- Which claims require a source from an authoritative archive before they enter a formal report?
+
+All project dates, named roles, and metrics elsewhere in this folder are illustrative and should be labelled as such in any presentation.

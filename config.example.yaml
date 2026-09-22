@@ -1,0 +1,38 @@
+# DataTaxonomy user configuration template.
+# The installer copies this file to config.yaml on first setup.
+# Replace the input_dir with the user's project folder.
+
+project:
+  name: Your Project Name
+  location: City, Country
+  year_range:
+  - 2020
+  - 2030
+  lead_firm: Your Organisation
+  consultants: []
+  authorities: []
+  notes: Brief project description used as classification context.
+
+paths:
+  # Use a Windows path, for example: C:/Users/YourName/Documents/Project
+  input_dir: C:/path/to/your/project/folder
+  output_csv: outputs/results.csv
+  taxonomy_path: taxonomy.yaml
+
+processing:
+  provider: openrouter     # openrouter | vectorengine | deepseek | custom
+  sample_n: 20              # Use 0 or leave blank to process all files.
+  model: google/gemini-2.0-flash-001
+  base_url: https://openrouter.ai/api/v1
+  parallel_workers: 4
+  api_timeout: 60
+  delay: 0.3
+  incremental: false
+
+age_analysis:
+  warn_predates_years: 10
+  warn_postproject_years: 3
+
+dashboard:
+  port: 5174
+  auto_launch: true

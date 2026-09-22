@@ -1,0 +1,14 @@
+SYNTHETIC DEMO — illustrative training case, not an authentic project record.
+
+
+WATER AND FLOOD ASSESSMENT — DESKTOP STUDY
+
+The synthetic desktop study assumes a low-lying polder context with constrained surface discharge during intense rainfall. The south landscape basin is treated as a potential storage area, but its capacity, groundwater interaction, and connection to the public drainage network require confirmation.
+
+ILLUSTRATIVE FINDINGS
+
+A 1-in-100-year rainfall event is modelled as 72 mm in 60 minutes for option testing. The concept network proposes four rain gardens, a 480 cubic metre combined storage target, permeable parking bays, and controlled overflow toward an existing water edge. These figures are not an approved hydraulic design.
+
+HARD CONSTRAINTS AND GAPS
+
+Finished floor levels, outlet capacity, groundwater levels, maintenance responsibility, and the water authority’s discharge requirements are unresolved. The project should not fix landscape levels or basement thresholds until these items are verified.

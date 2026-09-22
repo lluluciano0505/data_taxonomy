@@ -1,0 +1,155 @@
+# Default taxonomy used by the deployment package.
+# Customize this file from the configuration page or taxonomy editor.
+domains:
+- description: Building design, plans, sections, elevations, facades, interior layouts.
+  name: Architecture & Buildings
+- description: Landscape design, planting, hardscape, parks, streetscape, public realm.
+  name: Landscape & Public Realm
+- description: Foundations, load-bearing systems, steel/concrete/timber structures.
+  name: Structural Engineering
+- description: Heating, ventilation, air conditioning, thermal comfort and ducting
+    systems.
+  name: MEP - HVAC
+- description: Water supply, drainage, sewage, stormwater and plumbing systems.
+  name: MEP - Plumbing
+- description: Power distribution, lighting, low-voltage systems, electrical infrastructure.
+  name: MEP - Electrical
+- description: Utilities, roads, bridges, tunnels, grading, external infrastructure
+    works.
+  name: Civil & Infrastructure
+- description: Pedestrian networks, transit, traffic analysis, cycling routes, parking.
+  name: Mobility & Transport
+- description: Ecology, biodiversity, hydrology, sustainability, wind/noise studies.
+  name: Environment & Climate
+- description: BOQ, estimates, valuations, payments, quantity surveying and commercial
+    controls.
+  name: QS & Commercial
+- description: Contracts, permits, approvals, legal correspondence and compliance
+    docs.
+  name: Administrative & Legal
+- description: Schedules, RFIs, transmittals, meeting records, internal coordination.
+  name: Project Management
+- description: Standards, precedents, benchmark studies, background research.
+  name: Reference & Research
+- description: Cannot determine from available evidence.
+  name: Unknown
+scales:
+- description: Interior details, room-level layouts, component-level drawings.
+  name: Component / Room
+- description: Single floor plans, level coordination and floor-specific documentation.
+  name: Floor / Level
+- description: Parcel/red-line scope, block-level planning and design packages.
+  name: Plot / Block
+- description: Urban block, district, zone or precinct scale.
+  name: Neighborhood / District
+- description: City-wide or municipal-scale planning and strategy.
+  name: City / Municipal
+- description: Cross-city or metro-region planning and infrastructure scope.
+  name: Metropolitan
+- description: Regional, national or cross-boundary policy/infrastructure scale.
+  name: Regional / National
+- description: No meaningful geographic scope.
+  name: Non-spatial
+lifecycle_stages:
+- description: Design competition entries, competition boards, RFP responses and bid-stage
+    submissions.
+  name: Competition
+- description: Early ideas, vision docs, feasibility studies, concept and SD-phase
+    drawings and presentations.
+  name: Concept / Schematic
+- description: DD-phase developed layouts, coordinated discipline inputs and technical
+    refinement.
+  name: Design Development
+- description: Permit sets, issue-for-construction packages and final specifications.
+  name: Construction Documents
+- description: Construction-phase support — site instructions, construction logs, RFIs,
+    submittals, variation/change orders.
+  name: Construction Administration
+- description: Final built condition, as-built records, completion and handover submissions.
+  name: As-Built / Handover
+- description: Cannot determine from available evidence.
+  name: Unknown
+confidentiality_levels:
+- description: contracts, financial records (invoices, payroll, salary data, bank
+    statements, financial statements/reports), email communications (.eml/.msg), or
+    files explicitly labelled Confidential / Strictly Confidential
+  name: Confidential
+- description: drawings, reports, specifications, budgets, cost plans, tender documents,
+    meeting minutes, schedules, and all other files not matching the Confidential
+    types above
+  name: Not Confidential
+asset_types:
+- description: 'Any file whose PRIMARY VALUE is the specific facts, observations,
+    or measured states it records — regardless of format. Includes: structured tables
+    (CSV, XLSX, JSON), GIS datasets, machine-readable exports, qualitative survey
+    reports whose value lies in the specific findings recorded (species presence/absence,
+    habitat condition ratings, site investigation results, audit findings, noise/wind
+    measurements, ecological assessments, geotechnical logs), AND image files (JPG/PNG)
+    that are charts, graphs, diagrams, or data visualizations showing quantitative
+    measurements or distributions. Key test: could a researcher extract a list of
+    discrete facts from this file to use as design inputs? If yes → Data.'
+  name: Data
+- description: textual deliverables whose PRIMARY VALUE is the reasoning, narrative,
+    or guidance they contain — not a specific list of facts. Reports where the argument
+    matters more than the findings (design rationale, specifications, meeting notes,
+    memos, design guidelines, planning statements). If the document RECORDS discrete
+    facts (species lists, measurement results, condition states), classify as Data
+    instead.
+  name: Document
+- description: CAD/BIM drawings and design sheets (DWG/DXF/IFC/RVT, plans, sections,
+    details)
+  name: Drawing
+- description: BIM/federated models, 3D model exchanges, point clouds and model coordination
+    assets.
+  name: Model
+- description: Engineering calculations, simulation sheets, thermal/structural computation
+    documents.
+  name: Calculation
+- description: Statutory/regulatory submissions, permits, authority approvals and
+    compliance certificates.
+  name: Statutory
+- description: 'imagery and audiovisual files (photos, renderings, videos). NOT charts,
+    graphs, or diagrams whose primary value is the quantitative data they display —
+    those should be classified as Data regardless of image format.'
+  name: Media
+- description: compressed containers and bundled packages (ZIP/7Z/RAR)
+  name: Archive
+- description: insufficient evidence to determine asset type
+  name: Unknown
+information_types:
+- description: textual content whose value is the narrative or argument (PDF, Word,
+    design rationale, meeting notes, specs, planning statements)
+  name: Document
+- description: reports that record specific factual states of the world — species
+    presence/absence, habitat condition, site investigation findings, ecological baselines,
+    noise/wind/flood measurements, audit results, geotechnical observations. The value
+    is the FINDINGS, not the narrative. Use this over Document when the file is primarily
+    a record of observations.
+  name: Survey / Assessment
+- description: CAD/BIM drawings and technical drawings
+  name: Drawing
+- description: structured data (CSV, Excel, JSON, databases)
+  name: Tabular
+- description: geographic/GIS data (Shapefiles, GeoJSON, KML, GeoPackage)
+  name: Spatial
+- description: 3D models and BIM files
+  name: Model
+- description: images, photos, videos, renderings
+  name: Media
+- description: calculations, specifications, reports
+  name: Technical
+- description: email messages and communications
+  name: Email
+governance_sources:
+- description: Generated internally by lead firm or core team
+  name: Internal
+- description: Sourced from external consultants or third parties
+  name: External
+- description: Deliverables from design/engineering consultants
+  name: Consultant
+- description: Work from development partners or joint venture partners
+  name: Partner
+- description: Submissions from regulatory/authority sources
+  name: Authority
+- description: Source cannot be determined from available evidence
+  name: Unknown

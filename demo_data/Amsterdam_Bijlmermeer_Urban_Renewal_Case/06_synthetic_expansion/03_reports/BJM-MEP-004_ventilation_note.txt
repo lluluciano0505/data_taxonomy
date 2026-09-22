@@ -1,0 +1,8 @@
+SYNTHETIC DEMO - fictional project records - NOT FOR CONSTRUCTION
+
+VENTILATION COORDINATION NOTE
+BJM-MEP-004 / P01 / 2025-04-21
+
+Provide a coordinated route diagram for supply and extract risers in Core 02. The mock schedule assumes 8 dwellings on the ground floor. Equipment duty, acoustic limits and actual ventilation rates remain to be designed by the responsible engineer.
+
+Open interface: the riser must not conflict with the rainwater pipe in RFI-018. Reserve access panels for maintenance. This is an invented coordination narrative, not a system design.

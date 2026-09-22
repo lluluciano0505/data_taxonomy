@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataTaxonomy — Configuration Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:         #f5f5f3;
+    --surface:    #ffffff;
+    --fg:         #0a0a0a;
+    --muted:      #737373;
+    --muted-2:    #a3a3a3;
+    --hairline:   rgba(0,0,0,0.12);
+    --hairline-s: rgba(0,0,0,0.06);
+    --err:        #b91c1c;
+    --ok:         #166534;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg); color: var(--fg);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 300; font-size: 13px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased; min-height: 100vh;
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  .label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* ── Shell ── */
+  .shell { max-width: 960px; margin: 0 auto; padding: 40px 48px 120px; }
+  header.topbar {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-bottom: 20px; border-bottom: 1px solid var(--hairline); margin-bottom: 40px;
+  }
+  .brand { font-family: 'JetBrains Mono'; font-size: 13px; letter-spacing: 0.08em; }
+  .brand b { font-weight: 500; }
+
+  /* ── Hamburger nav ── */
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .ham-wrap { position: relative; }
+  .ham-btn {
+    width: 30px; height: 30px; border: 1px solid var(--hairline);
+    border-radius: 10px; background: var(--surface); cursor: pointer;
+    padding: 0; display: flex; flex-direction: column; gap: 4px;
+    align-items: center; justify-content: center; transition: border-color .2s, background .2s;
+  }
+  .ham-btn:hover { border-color: var(--fg); background: var(--bg); }
+  .ham-btn span { display: block; width: 12px; height: 1px; background: var(--fg); }
+  .ham-menu {
+    position: absolute; top: calc(100% + 10px); right: 0;
+    width: 220px; background: rgba(255,255,255,.98); border: 1px solid var(--hairline);
+    border-radius: 12px; box-shadow: 0 12px 28px rgba(0,0,0,.08); padding: 6px;
+    display: none; z-index: 50;
+  }
+  .ham-menu.open { display: block; }
+  .ham-item {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 8px 10px; border-radius: 8px; color: var(--muted);
+    font-family: 'JetBrains Mono'; font-size: 9px; letter-spacing: .12em;
+    text-transform: uppercase; text-decoration: none; transition: background .15s, color .15s;
+  }
+  .ham-item:hover { background: var(--bg); color: var(--fg); }
+  .ham-icon { font-family: 'JetBrains Mono'; font-size: 9px; color: var(--muted); min-width: 18px; text-align: center; }
+  .ham-sep { height: 1px; background: var(--hairline); margin: 4px 0; }
+
+  /* ── Stepper (5 steps) ── */
+  .stepper { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin-bottom: 44px; }
+  .step {
+    position: relative; padding: 16px 0 18px;
+    border-top: 1px solid var(--hairline); cursor: pointer;
+    transition: border-color .25s, color .25s;
+  }
+  .step::before {
+    content: ""; position: absolute; top: -1px; left: 0;
+    width: 0; height: 1px; background: var(--fg);
+    transition: width .5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .step.done::before, .step.active::before { width: 100%; }
+  .step .num { font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.1em; color: var(--muted); }
+  .step .ttl { margin-top: 6px; font-size: 12px; color: var(--muted); transition: color .25s; }
+  .step.active .ttl, .step.done .ttl { color: var(--fg); }
+  .step.done .num::after { content: "  ✓"; color: var(--fg); }
+
+  /* ── Panels ── */
+  .panel { display: none; animation: rise .4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .panel.active { display: block; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  h1.page-title {
+    font-family: 'Inter'; font-weight: 300; font-size: 34px;
+    letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 12px;
+  }
+  p.page-lede { color: var(--muted); font-size: 14px; max-width: 56ch; margin-bottom: 40px; }
+
+  /* ── Fields ── */
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 36px; }
+  .field-grid.single { grid-template-columns: 1fr; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field .hint { font-size: 12px; color: var(--muted); font-weight: 300; }
+  .field.required > .label::after { content: " *"; color: var(--err); margin-left: 2px; }
+  input[type=text], input[type=number], input[type=password], textarea, select {
+    width: 100%; background: transparent; border: none;
+    border-bottom: 1px solid var(--hairline); padding: 6px 0 8px;
+    font-family: inherit; font-size: 14px; color: var(--fg); transition: border-color .2s;
+  }
+  input:focus, textarea:focus, select:focus { outline: none; border-bottom-color: var(--fg); }
+  textarea { resize: vertical; min-height: 72px; padding-top: 8px; }
+  input::placeholder, textarea::placeholder { color: var(--muted-2); font-weight: 300; }
+
+  #f_baseurl, #f_model {
+    display: block; width: 100%; margin-top: 6px; padding: 10px 0;
+    border: 0; border-bottom: 1px solid var(--hairline); border-radius: 0;
+    background: transparent; color: var(--fg); font: inherit;
+  }
+  #f_baseurl:focus, #f_model:focus { outline: none; border-bottom-color: var(--fg); }
+  .apikey-row { flex-wrap: wrap; }
+  /* ── API key row ── */
+  .apikey-row {
+    display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: end;
+    margin-bottom: 32px;
+  }
+  .apikey-badge {
+    font-family: 'JetBrains Mono'; font-size: 11px; padding: 6px 12px;
+    border: 1px solid var(--hairline); background: var(--surface);
+    color: var(--muted); white-space: nowrap;
+  }
+  .apikey-badge.ok { border-color: #bbf7d0; color: var(--ok); background: #f0fdf4; }
+
+  /* ── Help row ── */
+  .help-row {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 14px 16px; border: 1px solid var(--hairline);
+    border-radius: 2px; background: var(--surface); margin-bottom: 32px;
+  }
+  .help-row .kicker {
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); min-width: 80px; padding-top: 2px;
+  }
+  .help-row p { font-size: 12.5px; }
+  .help-row strong { font-weight: 500; }
+
+  /* ── Advanced disclosure ── */
+  details.adv { margin-top: 40px; border-top: 1px solid var(--hairline); padding-top: 20px; }
+  details.adv > summary {
+    list-style: none; cursor: pointer; font-family: 'JetBrains Mono';
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+    display: flex; justify-content: space-between; padding: 6px 0;
+  }
+  details.adv > summary::-webkit-details-marker { display: none; }
+  details.adv > summary::after { content: "+"; font-family: 'JetBrains Mono'; font-size: 14px; color: var(--fg); }
+  details[open].adv > summary::after { content: "–"; }
+  details.adv .field-grid { margin-top: 20px; }
+
+  /* ── Tokens ── */
+  .tokens { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 0 2px; }
+  .tokens .tok {
+    font-family: 'JetBrains Mono'; font-size: 11px; padding: 4px 8px;
+    border: 1px solid var(--hairline); border-radius: 2px; background: var(--surface);
+  }
+  .tokens .tok button {
+    border: none; background: none; cursor: pointer;
+    color: var(--muted); margin-left: 6px; font-family: inherit; font-size: 11px;
+  }
+
+  /* ── Path row ── */
+.ghost-btn {
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--fg); background: var(--surface); border: 1px solid var(--hairline);
+    padding: 8px 14px; cursor: pointer; transition: background .2s, border-color .2s; white-space: nowrap;
+  }
+  .ghost-btn:hover { background: var(--bg); border-color: var(--fg); }
+
+  /* ── Model cards ── */
+  .model-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .model-card {
+    border: 1px solid var(--hairline); padding: 14px 16px; background: var(--surface);
+    cursor: pointer; transition: border-color .2s; position: relative;
+  }
+  .model-card:hover { border-color: var(--muted); }
+  .model-card.selected { border-color: var(--fg); }
+  .model-card.selected::after { content: "●"; position: absolute; top: 10px; right: 12px; color: var(--fg); font-size: 10px; }
+  .model-card .m-name { font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 500; }
+  .model-card .m-meta { margin-top: 6px; font-size: 11px; color: var(--muted); display: flex; gap: 10px; }
+  .model-card .m-note { margin-top: 5px; font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+  /* ── Info tile ── */
+  .info-tile {
+    background: var(--surface); border: 1px solid var(--hairline);
+    padding: 16px 20px; display: flex; justify-content: space-between;
+    align-items: baseline; margin-bottom: 24px;
+  }
+  .info-tile .big { font-family: 'Inter'; font-weight: 300; font-size: 28px; letter-spacing: -0.02em; }
+
+  /* ── Review ── */
+  .review { border-top: 1px solid var(--hairline); }
+  .review .row {
+    display: grid; grid-template-columns: 160px 1fr auto;
+    padding: 14px 0; border-bottom: 1px solid var(--hairline); gap: 20px; align-items: baseline;
+  }
+  .review .row .k { font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .review .row .v { font-size: 13px; white-space: pre-wrap; word-break: break-word; }
+  .review .row .v .empty { color: var(--err); font-style: italic; }
+  .review .row .jump {
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); cursor: pointer; border: none; background: none;
+  }
+  .review .row .jump:hover { color: var(--fg); }
+
+  /* ── Buttons ── */
+  .btn {
+    font-family: 'JetBrains Mono'; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 11px 22px; border: 1px solid var(--fg); cursor: pointer; transition: background .2s, color .2s;
+  }
+  .btn.primary { background: var(--fg); color: var(--bg); }
+  .btn.primary:hover { background: transparent; color: var(--fg); }
+  .btn.secondary { background: transparent; color: var(--fg); border-color: var(--hairline); }
+  .btn.secondary:hover { border-color: var(--fg); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* ── Error / info bar ── */
+  .err-bar {
+    border-left: 2px solid var(--err); background: var(--surface);
+    padding: 10px 14px; margin-bottom: 24px; font-size: 12.5px; color: var(--err); display: none;
+  }
+  .err-bar.show { display: block; }
+
+  /* ── Welcome ── */
+  .welcome-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin-top: 40px; }
+  .welcome-col h4 {
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 14px;
+  }
+  .welcome-col ol, .welcome-col ul { list-style: none; counter-reset: stepcount; }
+  .welcome-col ol li, .welcome-col ul li {
+    padding: 12px 0 12px 36px; border-top: 1px solid var(--hairline-s);
+    position: relative; font-size: 13px;
+  }
+  .welcome-col ol li:first-child, .welcome-col ul li:first-child { border-top: none; }
+  .welcome-col ol li::before {
+    counter-increment: stepcount; content: counter(stepcount, decimal-leading-zero);
+    position: absolute; left: 0; top: 12px;
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.1em; color: var(--muted);
+  }
+  .welcome-col ul li::before { content: "—"; position: absolute; left: 0; top: 12px; color: var(--muted); }
+  .welcome-col small { display: block; margin-top: 2px; font-size: 11.5px; color: var(--muted); }
+
+  /* ── URL autofill box ── */
+  .urlbox {
+    display: grid; grid-template-columns: 1fr auto; gap: 10px;
+    padding: 16px 18px; border: 1px dashed var(--hairline);
+    background: var(--surface); margin-bottom: 32px;
+  }
+  .urlbox .label { margin-bottom: 6px; grid-column: 1 / -1; }
+  .urlbox input { border-bottom: 1px solid var(--hairline); }
+
+  /* ── Done badge ── */
+  .done-badge {
+    display: inline-block; padding: 4px 8px; border: 1px solid var(--ok); color: var(--ok);
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-left: 12px;
+  }
+
+  /* ── Taxonomy editor ── */
+  .tax-section { margin-bottom: 48px; }
+  .tax-section h3 { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+  .tax-section .tax-hint { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .tax-table { width: 100%; border-collapse: collapse; }
+  .tax-table th {
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--hairline);
+  }
+  .tax-table td { padding: 4px 6px; border-bottom: 1px solid var(--hairline-s); }
+  .tax-table input {
+    width: 100%; border: none; border-bottom: 1px solid transparent;
+    padding: 4px; font-family: inherit; font-size: 13px; background: transparent; color: var(--fg);
+  }
+  .tax-table input:focus { outline: none; border-bottom-color: var(--fg); }
+  .tax-table .del-btn { border: none; background: none; cursor: pointer; color: var(--muted-2); font-size: 14px; padding: 2px 6px; }
+  .tax-table .del-btn:hover { color: var(--err); }
+  .add-row-btn {
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    border: 1px dashed var(--hairline); background: transparent; color: var(--muted);
+    padding: 8px 16px; cursor: pointer; margin-top: 8px; width: 100%; transition: border-color .2s, color .2s;
+  }
+  .add-row-btn:hover { border-color: var(--fg); color: var(--fg); }
+
+  /* ── Run panel ── */
+  .run-divider { border: none; border-top: 1px solid var(--hairline); margin: 40px 0 32px; }
+  .run-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+  .run-card { border: 1px solid var(--hairline); padding: 14px 18px; background: var(--surface); }
+  .run-card .rc-val { font-family: 'JetBrains Mono'; font-size: 18px; margin-top: 4px; }
+  .run-btn-row { display: flex; gap: 12px; margin-bottom: 24px; }
+  .run-btn {
+    font-family: 'JetBrains Mono'; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 14px 28px; border: 1px solid var(--fg); cursor: pointer; transition: background .2s, color .2s;
+  }
+  .run-btn.primary { background: var(--fg); color: var(--bg); }
+  .run-btn.primary:hover { background: transparent; color: var(--fg); }
+  .run-btn.danger { border-color: var(--err); color: var(--err); background: transparent; }
+  .run-btn.danger:hover { background: var(--err); color: #fff; }
+  .run-btn:disabled { opacity: .35; cursor: not-allowed; }
+  .progress-bar-wrap { width: 100%; height: 2px; background: var(--hairline); margin-bottom: 20px; display: none; }
+  .progress-bar-fill { height: 100%; background: var(--fg); width: 0; transition: width .4s ease; }
+  .log-box {
+    background: #0a0a0a; color: #e5e5e5; font-family: 'JetBrains Mono'; font-size: 11px;
+    line-height: 1.6; padding: 16px; max-height: 380px; overflow-y: auto; display: none; border-radius: 2px;
+  }
+  .status-chip {
+    display: inline-block; padding: 4px 10px; font-family: 'JetBrains Mono'; font-size: 10px;
+    letter-spacing: 0.08em; text-transform: uppercase; border-radius: 2px; margin-left: 12px;
+  }
+  .chip-running { background: #fef3c7; color: #92400e; }
+  .chip-done    { background: #dcfce7; color: var(--ok); }
+  .chip-err     { background: #fee2e2; color: var(--err); }
+  .db-row { margin-top: 20px; display: flex; align-items: center; gap: 16px; }
+
+  /* ── Saved profiles ── */
+  .profiles-section { margin-top: 44px; border-top: 1px solid var(--hairline); padding-top: 28px; }
+  .profiles-section h4 {
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 16px;
+  }
+  .save-as-row {
+    display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; margin-bottom: 20px;
+  }
+  .profiles-list { display: flex; flex-direction: column; gap: 0; }
+  .profile-row {
+    display: grid; grid-template-columns: 1fr auto auto auto;
+    gap: 12px; align-items: center; padding: 12px 0;
+    border-bottom: 1px solid var(--hairline-s);
+  }
+  .profile-row:last-child { border-bottom: none; }
+  .profile-meta { display: flex; flex-direction: column; gap: 2px; }
+  .profile-meta .p-name { font-size: 13px; font-weight: 400; }
+  .profile-meta .p-sub { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--muted-2); }
+  .profile-action {
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); background: none; border: 1px solid var(--hairline);
+    padding: 5px 10px; cursor: pointer; transition: border-color .2s, color .2s; white-space: nowrap;
+  }
+  .profile-action:hover { border-color: var(--fg); color: var(--fg); }
+  .profile-action.danger:hover { border-color: var(--err); color: var(--err); }
+  .profiles-empty { font-size: 12px; color: var(--muted-2); padding: 8px 0; }
+
+  /* ── Footer nav ── */
+  .nav-row {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: rgba(245,245,243,0.92); backdrop-filter: blur(10px);
+    border-top: 1px solid var(--hairline); padding: 14px 48px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .nav-row .progress { font-family: 'JetBrains Mono'; font-size: 11px; letter-spacing: 0.08em; color: var(--muted); }
+  .nav-row .buttons { display: flex; gap: 10px; }
+
+  /* Soft fields and spacing replace repeated divider lines. */
+  :root { --bg: #f6f5f1; --fg: #242624; --muted: #727570; }
+  .shell { max-width: 1000px; padding-top: 32px; }
+  header.topbar { border: 0; margin-bottom: 28px; }
+  .stepper { gap: 8px; margin-bottom: 36px; }
+  .step { border: 0; padding: 12px 14px; border-radius: 12px; }
+  .step::before { display: none; }
+  .step.active { background: #e9e9e1; }
+  .step .ttl { margin-top: 3px; }
+  .panel { background: white; border-radius: 20px; padding: 32px; }
+  h1.page-title { font-size: 28px; line-height: 1.25; }
+  p.page-lede { font-size: 13px; margin-bottom: 28px; }
+  .label { font-family: inherit; letter-spacing: .02em; text-transform: none; font-size: 12px; }
+  input[type=text], input[type=number], input[type=password], textarea, select, #f_model {
+    background: #f4f4f0; border: 0; border-radius: 9px; padding: 12px 14px; font: inherit; font-size: 14px; margin-top: 5px;
+  }
+  input:focus, textarea:focus, select:focus, #f_model:focus { outline: 2px solid #adbba7; outline-offset: 2px; }
+  input[type=hidden] { display: none !important; }
+  .connection-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 20px; }
+  .connection-fields > label:has(#f_provider), .connection-fields > label:has(#f_model), .connection-status, .connection-details { grid-column: 1 / -1; }
+  .hint { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  details > summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+  .connection-details p { margin: 12px 0; overflow-wrap: anywhere; }
+  .apikey-row { grid-template-columns: 1fr auto; align-items: center; margin-bottom: 16px; }
+  .apikey-badge, .tokens .tok, .done-badge { border: 0; border-radius: 8px; background: #f4f4f0; }
+  .help-row, .info-tile, .urlbox { border: 0; border-radius: 12px; background: #f6f6f2; }
+  .urlbox input { border: 0; background: white; }
+  details.adv { border: 0; padding-top: 0; }
+  .ghost-btn, .btn { border: 0; border-radius: 9px; font-family: inherit; font-size: 13px; letter-spacing: 0; text-transform: none; }
+  .ghost-btn, .btn.secondary { background: #eeeee8; }
+  .nav-row { border: 0; box-shadow: 0 -4px 20px #24242405; }
+  .review { border: 0; }
+  .review .row { border: 0; border-radius: 8px; padding: 13px 12px; }
+  .review .row:nth-child(odd) { background: #f7f7f3; }
+  .tax-table th, .tax-table td { border: 0; }
+  .tax-table tbody tr:nth-child(odd) { background: #f7f7f3; }
+  .tax-table input { background: transparent; border: 0; margin: 0; }
+  :focus-visible { outline: 2px solid #6b8263; outline-offset: 3px; }
+  @media(max-width:640px) { .shell {padding:24px 14px 110px} .panel {padding:22px 18px} .step {padding:10px 6px} .step .ttl {font-size:10px} .connection-fields,.field-grid {grid-template-columns:1fr} .review .row {grid-template-columns:100px 1fr auto;gap:8px} }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <header class="topbar">
+    <div class="brand">Data Taxonomy / <b>Configuration Manager</b></div>
+    <div class="topbar-right">
+      <div class="ham-wrap">
+        <button class="ham-btn" id="hamBtn" onclick="toggleHam()" aria-label="Navigation menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="ham-menu" id="hamMenu">
+          <a class="ham-item" href="/" onclick="closeHam()">
+            <span class="ham-icon">01</span><span>Home</span>
+          </a>
+          <a class="ham-item" href="/taxonomy-editor" target="_blank" onclick="closeHam()">
+            <span class="ham-icon">02</span><span>Taxonomy Editor</span>
+          </a>
+          <a class="ham-item" href="/config_index.html" target="_blank" onclick="closeHam()">
+            <span class="ham-icon">03</span><span>Projects</span>
+          </a>
+          <div class="ham-sep"></div>
+          <a class="ham-item" href="#" onclick="openDash(event)">
+            <span class="ham-icon">↗</span><span>Dashboard</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Stepper ── -->
+  <nav class="stepper" id="stepper">
+    <div class="step active" data-step="1"><div class="num">01</div><div class="ttl">Connection</div></div>
+    <div class="step"        data-step="2"><div class="num">02</div><div class="ttl">Project</div></div>
+    <div class="step"        data-step="3"><div class="num">03</div><div class="ttl">Files</div></div>
+    <div class="step"        data-step="4"><div class="num">04</div><div class="ttl">Taxonomy</div></div>
+    <div class="step"        data-step="5"><div class="num">05</div><div class="ttl">Review &amp; Run</div></div>
+  </nav>
+
+  <!-- ── Panel 1: Welcome + API Key ── -->
+  <section class="panel active" data-panel="1">
+    <h1 class="page-title">Connect your AI.</h1>
+    <p class="page-lede">
+      Choose a provider and model, then verify your API key.
+    </p>
+
+    <div style="margin-bottom:40px;">
+      <div class="label" style="margin-bottom:10px;">AI Connection</div>
+      <div class="connection-fields">
+        <label>Provider<select id="f_provider" onchange="changeProvider()"><option value="openrouter">OpenRouter</option><option value="vectorengine">Vector Engine</option></select></label>
+        <input id="f_baseurl" type="hidden" />
+        <label>Model<select id="f_model" onchange="state.model=this.value; showModelDetails()"><option value="">Choose a model</option></select></label>
+        <p class="hint connection-status" id="connectionHint" role="status" aria-live="polite">Loading models…</p>
+        <details class="connection-details"><summary>Model &amp; connection details</summary>
+          <p class="hint" id="modelDetails"></p>
+          <p class="hint">API address · <span id="endpointLabel"></span></p>
+          <button type="button" class="ghost-btn" id="refreshModelsBtn" onclick="loadModels()">Reload shortlist</button>
+          <p class="hint">Keys are saved locally for each provider. Save your project to apply this connection.</p>
+        </details>
+      </div>
+      <details style="margin:16px 0"><summary style="cursor:pointer">Advanced processing settings</summary>
+        <div style="display:grid;gap:12px;margin-top:12px">
+          <label>Sample size (blank = all files)<input type="number" min="1" id="f_sample" oninput="state.savedSampleN=this.value ? Number(this.value) : null" /></label>
+          <label>Parallel workers<input type="number" min="1" max="16" id="f_workers" oninput="state.parallelWorkers=Number(this.value)" /></label>
+          <label>API timeout (seconds)<input type="number" min="10" max="300" id="f_timeout" oninput="state.apiTimeout=Number(this.value)" /></label>
+        </div>
+      </details>
+      <label class="label" for="f_apikey">API Key</label>
+      <div class="apikey-row">
+        <input type="password" id="f_apikey" placeholder="Paste provider API key" autocomplete="off" />
+        <span class="apikey-badge" id="apikeyBadge">not set</span>
+        
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;margin-top:14px;flex-wrap:wrap;">
+        <button type="button" class="ghost-btn" id="testConnectionBtn" onclick="testConnection()">Save &amp; Verify Connection</button>
+        <span class="hint" id="connectionResult" role="status" aria-live="polite">Sends a short test message; provider charges may apply.</span>
+      </div>
+      <div class="err-bar" id="err-1"></div>
+
+    </div>
+
+
+  </section>
+
+  <!-- ── Panel 2: Project Info ── -->
+  <section class="panel" data-panel="2">
+    <h1 class="page-title">About the project.</h1>
+    <p class="page-lede">
+      Used for metadata enrichment and age-of-document analysis. Anything can be edited later.
+    </p>
+
+    <div class="urlbox">
+      <span class="label">Shortcut · autofill from URL</span>
+      <input id="projUrl" type="text" placeholder="https://example.com/project-page" />
+      <button class="ghost-btn" onclick="autofillFromUrl()">✨ Autofill</button>
+    </div>
+
+    <div class="err-bar" id="err-2"></div>
+
+    <div class="field-grid">
+      <div class="field required"><span class="label">Project Name</span>
+        <input id="f_name" type="text" placeholder="e.g. Shanghai Waterfront Revitalization" /></div>
+      <div class="field required"><span class="label">Location</span>
+        <input id="f_loc" type="text" placeholder="City, Country" /></div>
+      <div class="field required"><span class="label">Start Year</span>
+        <input id="f_y0" type="number" min="1900" max="2100" value="2020" />
+        <span class="hint">When the first documents were produced.</span></div>
+      <div class="field required"><span class="label">End Year</span>
+        <input id="f_y1" type="number" min="1900" max="2100" value="2026" />
+        <span class="hint">Last expected delivery year.</span></div>
+      <div class="field"><span class="label">Lead Firm</span>
+        <input id="f_lead" type="text" placeholder="e.g. Foster + Partners" /></div>
+      <div class="field"><span class="label">Consultants <span class="hint">— press Enter to add</span></span>
+        <input id="f_consult" type="text" placeholder="Arup, OLIN, …" onkeydown="addToken(event,'consultants')" />
+        <div class="tokens" id="consultants"></div></div>
+    </div>
+    <div class="field-grid single" style="margin-top:28px;">
+      <div class="field"><span class="label">Authorities <span class="hint">— press Enter to add</span></span>
+        <input id="f_auth" type="text" placeholder="Planning Commission, …" onkeydown="addToken(event,'authorities')" />
+        <div class="tokens" id="authorities"></div></div>
+      <div class="field"><span class="label">Notes</span>
+        <textarea id="f_notes" placeholder="A sentence or two about the project."></textarea></div>
+    </div>
+  </section>
+
+  <!-- ── Panel 3: Files ── -->
+  <section class="panel" data-panel="3">
+    <h1 class="page-title">Where your files live.</h1>
+    <p class="page-lede">
+      Point us at the folder containing your project documents — scanned recursively.
+      The output is a single CSV.
+    </p>
+
+    <div class="help-row">
+      <span class="kicker">Heads up</span>
+      <p>We support <strong>PDF, DOCX, PPTX, XLSX, TXT, PNG, JPG, DWG, IFC</strong> and more.
+        Files larger than a few hundred MB may be slow.</p>
+    </div>
+
+    <div class="err-bar" id="err-3"></div>
+
+    <div class="field-grid single">
+      <div class="field required"><span class="label">Input Directory</span>
+        <button type="button" class="ghost-btn" onclick="pickFolder()">Choose Folder…</button>
+        <input id="f_input" type="text" placeholder="Select a folder or paste its full path" />
+        <span class="hint">Files stay on your computer. Extracted text and relevant images are sent to your selected AI provider.</span></div>
+      <div class="field required"><span class="label">Output CSV</span>
+        <div style="display:flex; align-items:center; gap:0; border:0; border-radius:9px; overflow:hidden; background:#f4f4f0;">
+          <span style="padding:8px 10px; background:var(--bg); color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:12px; border-right:0; white-space:nowrap;">outputs/</span>
+          <input id="f_out" type="text" value="output" placeholder="e.g. fælledby_500"
+            style="border:none; border-radius:0; flex:1; margin:0; box-shadow:none;" />
+          <span style="padding:8px 10px; background:var(--bg); color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:12px; border-left:0; white-space:nowrap;">.csv</span>
+        </div>
+        <span class="hint">Name only — <code>outputs/</code> prefix and <code>.csv</code> are added automatically.</span></div>
+    </div>
+
+    <div class="info-tile" style="margin-top:28px;">
+      <div>
+        <div class="label">Files detected</div>
+        <div class="big mono" id="detectedFiles">—</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="label">Source</div>
+        <div class="mono" id="detectedFrom" style="font-size:12px;color:var(--muted);">type a path above</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Panel 4: Taxonomy ── -->
+  <section class="panel" data-panel="4">
+    <h1 class="page-title">Taxonomy.</h1>
+    <p class="page-lede">
+      Edit the classification options injected into the LLM prompt.
+      Add, rename, or remove rows — changes apply on the next pipeline run.
+    </p>
+
+    <!-- Taxonomy library -->
+    <div style="padding:16px 18px;border:0;border-radius:12px;background:#f6f6f2;margin-bottom:28px;">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
+        <span class="label" style="white-space:nowrap;">Saved taxonomies</span>
+        <div id="taxPresetList" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+        <span id="presetMsg" style="font-family:'JetBrains Mono';font-size:11px;color:var(--ok);display:none;margin-left:4px;"></span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="label" style="white-space:nowrap;">Save as</span>
+        <input id="taxSaveName" type="text" placeholder="preset name…"
+          style="font-family:'JetBrains Mono';font-size:12px;padding:4px 8px;border:1px solid var(--hairline);background:#fff;width:160px;" />
+        <button class="ghost-btn" onclick="saveTaxonomyAs()">Save</button>
+      </div>
+    </div>
+
+    <div class="err-bar" id="err-4tax"></div>
+    <div id="taxEditor"></div>
+    <div style="margin-top:32px;display:flex;gap:10px;">
+      <span class="hint">Changes are included when you save this project.</span>
+    </div>
+  </section>
+
+  <!-- ── Panel 5: Review & Run ── -->
+  <section class="panel" data-panel="5">
+    <h1 class="page-title">
+      Review &amp; Run
+      <span class="done-badge" id="reviewOk" style="display:none;">ready</span>
+    </h1>
+    <p class="page-lede">
+      Check your settings below. Save the project and its taxonomy together, or save and start processing.
+    </p>
+
+    <div class="err-bar" id="err-5"></div>
+    <div class="review" id="reviewTable"></div>
+  </section>
+
+</div><!-- /shell -->
+
+<!-- ── Bottom nav ── -->
+<div class="nav-row">
+  <div class="progress" id="progressTxt">Step 01 / 05 · Connection</div>
+  <div class="buttons">
+    <button id="quickSave" hidden class="btn primary" onclick="saveAll()">Save &amp; Return</button>
+    <button class="btn secondary" id="backBtn" onclick="go(-1)" disabled>← Back</button>
+    <button class="btn primary"   id="nextBtn" onclick="go(+1)">Continue →</button>
+  </div>
+</div>
+
+<script>
+  /* ── State ── */
+  const state = {
+    step: 1,
+    tokens: { consultants: [], authorities: [] },
+    // Processing settings remain part of the saved config, but are managed
+    // from the Project Manager rather than exposed as a wizard step.
+    model: 'google/gemini-2.5-flash',
+    parallelWorkers: 4,
+    apiTimeout: 60,
+    warnPredatesYears: 10,
+    warnPostprojectYears: 3,
+    savedSampleN: null,
+  };
+  const TITLES = ['Connection', 'Project', 'Files', 'Taxonomy', 'Review & Run'];
+  const TOTAL  = 5;
+
+  /* ── Stepper ── */
+  function go(delta) {
+    const n = state.step + delta;
+    if (n < 1 || n > TOTAL) return;
+    if (delta > 0 && !validate(state.step)) return;
+    state.step = n;
+    render();
+    if (state.step === 4) loadTaxonomy();
+    if (state.step === TOTAL) buildReview();
+
+  }
+  function goto(step) {
+    if (!editMode && step > state.step) {
+      for (let i = state.step; i < step; i++) {
+        if (!validate(i)) { state.step = i; render(); return; }
+      }
+    }
+    state.step = step;
+    render();
+    if (state.step === 4) loadTaxonomy();
+    if (state.step === TOTAL) buildReview();
+
+  }
+  function render() {
+    document.querySelectorAll('.panel').forEach(p =>
+      p.classList.toggle('active', +p.dataset.panel === state.step));
+    document.querySelectorAll('.step').forEach(s => {
+      const n = +s.dataset.step;
+      s.classList.toggle('active', n === state.step);
+      s.classList.toggle('done',   n < state.step);
+    });
+    document.getElementById('backBtn').disabled = state.step === 1;
+    const nb = document.getElementById('nextBtn');
+    if (state.step === TOTAL) {
+      nb.textContent = 'Save ✓';
+      nb.onclick = async () => { await saveAll(); };
+    } else {
+      nb.textContent = 'Continue →';
+      nb.onclick = () => go(+1);
+    }
+    document.getElementById('progressTxt').textContent =
+      'Step ' + String(state.step).padStart(2,'0') + ' / 0' + TOTAL + ' · ' + TITLES[state.step-1];
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  document.getElementById('stepper').addEventListener('click', e => {
+    const s = e.target.closest('.step');
+    if (s) goto(+s.dataset.step);
+  });
+
+  /* ── Validation ── */
+  function showErr(id, msg) {
+    const el = document.getElementById('err-' + id);
+    if (!el) return;
+    if (msg) { el.textContent = msg; el.classList.add('show'); }
+    else el.classList.remove('show');
+  }
+  function validate(step) {
+    if (!configReady) { showErr(1, 'Configuration is unavailable. Reload from the current project server before continuing.'); return false; }
+    if (step === 1) {
+      showErr(1, '');
+      if (!Number.isInteger(state.parallelWorkers) || state.parallelWorkers < 1 || state.parallelWorkers > 16 || !Number.isFinite(state.apiTimeout) || state.apiTimeout < 10 || state.apiTimeout > 300 || (state.savedSampleN !== null && (!Number.isInteger(state.savedSampleN) || state.savedSampleN < 1))) { showErr(1, 'Check advanced settings: 1–16 workers, 10–300 seconds, and a positive sample size.'); return false; }
+      if (!v('f_model') || !v('f_baseurl')) { showErr(1, 'Choose a model from the dropdown. Reload the shortlist if it is empty.'); return false; }
+      if (v('f_apikey')) { showErr(1, 'Click Save & Verify Connection first.'); return false; }
+    }
+    if (step === 2) {
+      showErr(2, '');
+      const y0 = +document.getElementById('f_y0').value;
+      const y1 = +document.getElementById('f_y1').value;
+      const missing = [];
+      if (!v('f_name')) missing.push('Project Name');
+      if (!v('f_loc'))  missing.push('Location');
+      if (y0 >= y1)     missing.push('Start Year must be before End Year');
+      if (missing.length) { showErr(2, 'Please fix: ' + missing.join(', ')); return false; }
+    }
+    if (step === 3) {
+      showErr(3, '');
+      if (!v('f_input')) { showErr(3, 'Input directory is required.'); return false; }
+      if (!v('f_out'))   { showErr(3, 'Output CSV path is required.'); return false; }
+    }
+    return true;
+  }
+  const v = id => (document.getElementById(id)?.value || '').trim();
+
+  /* ── Tokens ── */
+  function addToken(e, key) {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const val = e.target.value.trim();
+    if (!val) return;
+    state.tokens[key].push(val);
+    e.target.value = '';
+    renderTokens(key);
+  }
+  function rmToken(key, idx) { state.tokens[key].splice(idx,1); renderTokens(key); }
+  function renderTokens(key) {
+    document.getElementById(key).innerHTML = state.tokens[key]
+      .map((t,i) => `<span class="tok">${escapeHtml(t)} <button onclick="rmToken('${key}',${i})">×</button></span>`)
+      .join('');
+  }
+
+  let configReady = false;
+  async function readApiJson(response) {
+    const type = response.headers.get('content-type') || '';
+    if (!type.includes('application/json')) {
+      throw new Error('This page received a web page instead of configuration data (HTTP ' + response.status + '). Open the current project server, or restart it after upgrading.');
+    }
+    let data;
+    try { data = await response.json(); } catch { throw new Error('The server returned unreadable data. Restart the current project server and reload.'); }
+    if (!response.ok) throw new Error(data.error || 'Request failed (HTTP ' + response.status + ')');
+    return data;
+  }
+  async function apiJson(url, options) {
+    return readApiJson(await fetch(url, options));
+  }
+  let providerDefaults = {};
+  const connectionDrafts = {};
+  let activeProvider = 'openrouter';
+  function connectionFields() {
+    return {provider: v('f_provider'), base_url: v('f_baseurl'), model: v('f_model')};
+  }
+  function applyConnection(pr) {
+    let host = '';
+    try { host = new URL(pr.base_url).hostname; } catch {}
+    const inferred = !pr.base_url || host === 'openrouter.ai' ? 'openrouter' :
+      ['api.vectorengine.ai','api.vectorengine.cn','api.zhongzhuan.vip'].includes(host) ? 'vectorengine' :
+      host === 'api.deepseek.com' ? 'deepseek' : 'custom';
+    activeProvider = pr.provider || inferred;
+    if (!providerDefaults[activeProvider]) {
+      activeProvider = '';
+      const select = document.getElementById('f_provider');
+      if (!select.querySelector('option[value=""]')) select.prepend(new Option('Choose OpenRouter or Vector Engine', ''));
+    }
+    document.getElementById('f_provider').value = activeProvider;
+    document.getElementById('f_baseurl').value = providerDefaults[activeProvider]?.base_url || '';
+    document.getElementById('endpointLabel').textContent = v('f_baseurl');
+    const selected = pr.model ?? providerDefaults[activeProvider]?.model ?? '';
+    modelCatalog = [];
+    setModelOptions([], selected);
+    document.getElementById('f_apikey').value = '';
+    document.getElementById('connectionResult').textContent = 'Sends a short test message; provider charges may apply.';
+    checkApiKeyStatus();
+    loadModels();
+  }
+  let modelRequest = 0;
+  let modelCatalog = [];
+  function setModelOptions(models, selected) {
+    const select = document.getElementById('f_model');
+    select.replaceChildren(new Option('Choose a model', ''));
+    if (selected && !models.some(model => model.id === selected)) {
+      select.add(new Option(selected + (modelCatalog.some(model => model.id === selected) ? ' (current selection)' : ' (saved selection · verify availability)'), selected));
+    }
+    for (const [tier, label] of [['budget','Budget · 经济型'],['higher','Higher-priced · 较高价']]) {
+      const group = document.createElement('optgroup');
+      group.label = label;
+      models.filter(model => model.tier === tier).forEach(model => group.appendChild(new Option(model.name === model.id ? model.id : model.name + ' · ' + model.id, model.id)));
+      if (group.children.length) select.appendChild(group);
+    }
+    select.value = selected;
+    state.model = select.value;
+    showModelDetails();
+  }
+  function showModelDetails() {
+    const model = modelCatalog.find(model => model.id === v('f_model'));
+    const detail = document.getElementById('modelDetails');
+    if (!model) { detail.textContent = v('f_model') ? 'Saved model outside the shortlist. Select a tested model or verify this connection.' : 'Choose a model; budget and higher-priced models are grouped in the list.'; return; }
+    const price = model.pricing;
+    const tested = model.chat_tested_on ? 'Chat tested ' + model.chat_tested_on : 'Not chat-tested (region-restricted in CN — verify availability from your location)';
+    detail.textContent = tested + ' · Provider lists image support (not image-tested). ' +
+      (v('f_provider') === 'openrouter'
+        ? 'Reference: $' + price.input_per_million_usd + ' input / $' + price.output_per_million_usd + ' output per 1M tokens.'
+        : 'Price tier uses published base rates; your token group and context length affect actual charges.');
+  }
+  async function loadModels() {
+    const requestId = ++modelRequest;
+    const provider = v('f_provider');
+    const hint = document.getElementById('connectionHint');
+    const button = document.getElementById('refreshModelsBtn');
+    button.disabled = true;
+    hint.textContent = 'Loading tested shortlist…';
+    try {
+      const data = await apiJson('/api/recommended-models?provider=' + encodeURIComponent(provider));
+      if (requestId !== modelRequest || provider !== v('f_provider')) return;
+      modelCatalog = data.models;
+      setModelOptions(modelCatalog, v('f_model'));
+      const budget = modelCatalog.filter(model => model.tier === 'budget').length;
+      hint.textContent = modelCatalog.length + ' models (' + budget + ' budget · ' + (modelCatalog.length - budget) + ' higher-priced) · tested where reachable from CN.';
+    } catch (error) {
+      if (requestId === modelRequest && provider === v('f_provider')) hint.textContent = error.message + ' Your current selection is preserved.';
+    } finally {
+      if (requestId === modelRequest) button.disabled = false;
+    }
+  }
+  document.getElementById('f_apikey').addEventListener('input', () => {
+    document.getElementById('connectionResult').textContent = 'API key changed — verify this connection before saving.';
+  });
+
+  function changeProvider() {
+    connectionDrafts[activeProvider] = {base_url: v('f_baseurl'), model: v('f_model')};
+    const provider = v('f_provider');
+    applyConnection({provider, ...(connectionDrafts[provider] || providerDefaults[provider])});
+  }
+  async function testConnection() {
+    if (!configReady) return;
+    if (!v('f_model') || !v('f_provider')) { showErr(1, 'Choose a provider and model first.'); return; }
+    const btn = document.getElementById('testConnectionBtn');
+    const result = document.getElementById('connectionResult');
+    showErr(1, '');
+    btn.disabled = true; result.textContent = 'Testing…';
+    const sent = JSON.stringify(connectionFields());
+    try {
+      const response = await fetch('/test-connection', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({processing:JSON.parse(sent), key:v('f_apikey')})});
+      const data = await readApiJson(response);
+      if (sent === JSON.stringify(connectionFields())) {
+        result.textContent = data.ok ? 'Verified · ' + data.model : data.error || 'Connection failed';
+        if (data.ok) { document.getElementById('f_apikey').value = ''; checkApiKeyStatus(); }
+      }
+    } catch (error) { result.textContent = error.message || 'Could not reach server.'; }
+    finally { btn.disabled = false; }
+  }
+  ['f_baseurl','f_model'].forEach(id => document.getElementById(id).addEventListener('input', () => {
+    document.getElementById('connectionResult').textContent = 'Connection changed — test again.';
+  }));
+
+  /* ── API Key ── */
+  async function checkApiKeyStatus() {
+    try {
+      const provider = v('f_provider');
+      const res  = await fetch('/apikey-status?provider=' + encodeURIComponent(provider));
+      const data = await readApiJson(res);
+      if (provider !== v('f_provider')) return;
+      const badge = document.getElementById('apikeyBadge');
+      if (data.set) {
+        badge.textContent = data.masked;
+        badge.className   = 'apikey-badge ok';
+      } else {
+        badge.textContent = 'not set';
+        badge.className   = 'apikey-badge';
+      }
+    } catch {}
+  }
+  async function saveApiKey() {
+    const key = v('f_apikey');
+    if (!key) { showErr(1, 'Paste your API key first.'); return; }
+    showErr(1, '');
+    try {
+      const res  = await fetch('/save-apikey', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ key, provider: v('f_provider') }),
+      });
+      const data = await readApiJson(res);
+      if (data.ok) {
+        document.getElementById('f_apikey').value = '';
+        checkApiKeyStatus();
+      } else {
+        showErr(1, 'Save failed: ' + (data.error || '?'));
+      }
+    } catch {
+      showErr(1, 'Could not reach server.');
+    }
+  }
+
+  /* ── URL Autofill ── */
+  async function autofillFromUrl() {
+    const url = v('projUrl');
+    if (!url) { showErr(2, 'Paste a URL first.'); return; }
+    showErr(2, '');
+    const btn = document.querySelector('button[onclick="autofillFromUrl()"]');
+    btn.textContent = '⏳ Fetching…'; btn.disabled = true;
+    try {
+      const res  = await fetch('/autofill-from-url', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ url, processing: connectionFields() }),
+      });
+      const data = await readApiJson(res);
+      if (data.error) { showErr(2, 'Autofill failed: ' + data.error); return; }
+      if (data.name)       document.getElementById('f_name').value  = data.name;
+      if (data.location)   document.getElementById('f_loc').value   = data.location;
+      if (data.year_start) document.getElementById('f_y0').value    = data.year_start;
+      if (data.year_end)   document.getElementById('f_y1').value    = data.year_end;
+      if (data.lead_firm)  document.getElementById('f_lead').value  = data.lead_firm;
+      if (Array.isArray(data.consultants) && data.consultants.length) { state.tokens.consultants = data.consultants; renderTokens('consultants'); }
+      if (Array.isArray(data.authorities) && data.authorities.length) { state.tokens.authorities = data.authorities; renderTokens('authorities'); }
+      if (data.notes) document.getElementById('f_notes').value = data.notes;
+    } catch { showErr(2, 'Could not reach server.'); }
+    finally   { btn.textContent = '✨ Autofill'; btn.disabled = false; }
+  }
+
+  /* ── Folder picker ── */
+  /* ── File count ── */
+  async function countFiles() {
+    const path = v('f_input');
+    if (!path) return;
+    document.getElementById('detectedFiles').textContent = '…';
+    document.getElementById('detectedFrom').textContent  = 'counting…';
+    try {
+      const res  = await fetch('/file-count?path=' + encodeURIComponent(path));
+      const data = await readApiJson(res);
+      if (data.error) {
+        document.getElementById('detectedFiles').textContent = '—';
+        document.getElementById('detectedFrom').textContent  = data.error;
+      } else {
+        document.getElementById('detectedFiles').textContent = data.count.toLocaleString();
+        const short = data.path.length > 42 ? '…' + data.path.slice(-40) : data.path;
+        document.getElementById('detectedFrom').textContent  = short;
+      }
+    } catch {
+      document.getElementById('detectedFiles').textContent = '—';
+      document.getElementById('detectedFrom').textContent  = 'server unreachable';
+    }
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('f_input').addEventListener('blur',   countFiles);
+    document.getElementById('f_input').addEventListener('change', countFiles);
+  });
+
+  /* ── Taxonomy ── */
+  const TAX_SECTIONS = [
+    { key: 'domains',                label: 'Domains',                hint: 'Subject areas (Architecture, Landscape, MEP…)' },
+    { key: 'scales',                 label: 'Scales',                 hint: 'Geographic scope levels (Component → Regional)' },
+    { key: 'lifecycle_stages',       label: 'Lifecycle Stages',       hint: 'Design phases used in your office' },
+    { key: 'confidentiality_levels', label: 'Confidentiality Levels', hint: 'Access / sensitivity tiers' },
+    { key: 'asset_types',            label: 'Asset Types',            hint: 'Data / Document / Drawing / Model…' },
+    { key: 'information_types',      label: 'Information Types',      hint: 'Document / Drawing / Tabular / Spatial…' },
+    { key: 'governance_sources',     label: 'Governance Sources',     hint: 'Internal / External / Consultant / Authority…' },
+  ];
+  let taxData = {};
+  let taxLoaded = false;
+
+  async function loadTaxonomy() {
+    if (taxLoaded) return;
+    try {
+      const res = await fetch('/taxonomy');
+      taxData   = await readApiJson(res);
+      taxLoaded = true;
+      renderTaxEditor();
+    } catch {}
+    refreshTaxPresetList();
+  }
+
+  async function refreshTaxPresetList() {
+    try {
+      const res   = await fetch('/list-taxonomies');
+      const names = await readApiJson(res);
+      const list  = document.getElementById('taxPresetList');
+      if (!list) return;
+      list.innerHTML = names.map(name => `
+        <span style="display:inline-flex;align-items:center;gap:2px;">
+          <button class="ghost-btn" onclick="loadTaxPreset('${name}')">${name}</button>
+          <button onclick="deleteTaxPreset('${name}')" title="Delete"
+            style="background:none;border:none;cursor:pointer;color:#999;font-size:13px;padding:0 2px;">×</button>
+        </span>`).join('');
+    } catch {}
+  }
+
+  async function loadTaxPreset(name) {
+    try {
+      const res  = await fetch(`/read-taxonomy/${encodeURIComponent(name)}`);
+      const data = await readApiJson(res);
+      if (data.error) { showErr('4tax', 'Failed to load: ' + data.error); return; }
+      taxData   = data;
+      dirty = true;
+      taxLoaded = true;
+      renderTaxEditor();
+      const msg = document.getElementById('presetMsg');
+      msg.textContent = `✓ ${name} loaded`;
+      msg.style.display = 'inline';
+      setTimeout(() => { msg.style.display = 'none'; }, 3000);
+    } catch { showErr('4tax', 'Could not reach server.'); }
+  }
+
+  async function saveTaxonomyAs() {
+    const nameInput = document.getElementById('taxSaveName');
+    const name = (nameInput.value || '').trim();
+    if (!name) { nameInput.focus(); return; }
+    const clean = {};
+    TAX_SECTIONS.forEach(s => { clean[s.key] = (taxData[s.key]||[]).filter(r=>r.name&&r.name.trim()); });
+    const res  = await fetch('/save-taxonomy-as', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name, taxonomy: clean }),
+    });
+    const data = await readApiJson(res);
+    if (data.ok) {
+      nameInput.value = '';
+      const msg = document.getElementById('presetMsg');
+      msg.textContent = `✓ Saved as "${data.name}"`;
+      msg.style.display = 'inline';
+      setTimeout(() => { msg.style.display = 'none'; }, 3000);
+      refreshTaxPresetList();
+    } else { showErr('4tax', 'Save failed: ' + (data.error||'?')); }
+  }
+
+  async function deleteTaxPreset(name) {
+    if (!confirm(`Delete preset "${name}"?`)) return;
+    await fetch(`/delete-taxonomy/${name}`, { method: 'DELETE' });
+    refreshTaxPresetList();
+  }
+  function renderTaxEditor() {
+    document.getElementById('taxEditor').innerHTML = TAX_SECTIONS.map(s => `
+      <div class="tax-section">
+        <h3>${s.label}</h3><p class="tax-hint">${s.hint}</p>
+        <table class="tax-table" id="tax-${s.key}">
+          <thead><tr><th style="width:30%">Name</th><th>Description</th><th style="width:32px"></th></tr></thead>
+          <tbody>${(taxData[s.key]||[]).map((r,i) => taxRow(s.key,i,r)).join('')}</tbody>
+        </table>
+        <button class="add-row-btn" onclick="addTaxRow('${s.key}')">+ Add row</button>
+      </div>`).join('');
+  }
+  function taxRow(key, i, row) {
+    return `<tr>
+      <td><input value="${escapeHtml(row.name||'')}" oninput="updateTaxCell('${key}',${i},'name',this.value)"/></td>
+      <td><input value="${escapeHtml(row.description||'')}" oninput="updateTaxCell('${key}',${i},'description',this.value)"/></td>
+      <td><button class="del-btn" onclick="delTaxRow('${key}',${i})">×</button></td>
+    </tr>`;
+  }
+  function updateTaxCell(key,i,field,val) {
+    if(!taxData[key]) taxData[key]=[];
+    if(!taxData[key][i]) taxData[key][i]={};
+    taxData[key][i][field]=val;
+  }
+  function addTaxRow(key) {
+    dirty = true;
+    if(!taxData[key]) taxData[key]=[];
+    taxData[key].push({name:'',description:''});
+    renderTaxEditor();
+    const rows = document.querySelectorAll(`#tax-${key} tbody tr`);
+    if(rows.length) rows[rows.length-1].querySelector('input').focus();
+  }
+  function delTaxRow(key,i) { dirty = true; taxData[key].splice(i,1); renderTaxEditor(); }
+  async function saveTaxonomy() {
+    const clean = {};
+    TAX_SECTIONS.forEach(s => { clean[s.key] = (taxData[s.key]||[]).filter(r=>r.name&&r.name.trim()); });
+    const res  = await fetch('/save-taxonomy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(clean)});
+    const data = await readApiJson(res);
+    const bar  = document.getElementById('err-4tax');
+    if(data.ok) {
+      bar.textContent='✓ Taxonomy saved.'; bar.style.borderColor='#166534'; bar.style.color='#166534';
+      bar.classList.add('show'); setTimeout(()=>bar.classList.remove('show'),3000);
+    } else { bar.textContent='Save failed: '+(data.error||'?'); bar.classList.add('show'); }
+  }
+
+  /* ── Review ── */
+    function buildReview() {
+    const rows = [
+      ['Project name', v('f_name'),                          2],
+      ['Location',     v('f_loc'),                           2],
+      ['Year range',   `${v('f_y0')} – ${v('f_y1')}`,        2],
+      ['Lead firm',    v('f_lead'),                          2],
+      ['Consultants',  state.tokens.consultants.join(', '),  2],
+      ['Authorities',  state.tokens.authorities.join(', '),  2],
+      ['Notes',        v('f_notes'),                         2],
+      ['Input dir',    v('f_input'),                         3],
+      ['Output CSV',   v('f_out'),                           3],
+      ['Sample size',  state.savedSampleN != null ? String(state.savedSampleN) + ' files' : 'All files (set in Project Manager)', 1],
+      ['Provider',     v('f_provider'), 1],
+      ['Base URL',     v('f_baseurl'), 1],
+      ['Model',        v('f_model'),                          1],
+      ['Parallel workers', String(state.parallelWorkers),    1],
+      ['API timeout',  state.apiTimeout + 's',               1],
+    ];
+    const required = new Set(['Project name','Location','Year range','Input dir','Output CSV']);
+    let ok = true;
+    document.getElementById('reviewTable').innerHTML = rows.map(([k,val,step]) => {
+      const empty = !val || val === ' – ';
+      if (empty && required.has(k)) ok = false;
+      return `<div class="row">
+        <span class="k">${k}</span>
+        <span class="v">${empty?`<span class="empty">— not set —</span>`:escapeHtml(val)}</span>
+        <button class="jump" onclick="goto(${step})">edit →</button>
+      </div>`;
+    }).join('');
+    document.getElementById('reviewOk').style.display = ok ? 'inline-block' : 'none';
+    if (!ok) showErr(5, 'Some required fields are missing.'); else showErr(5, '');
+  }
+
+  let loadedConfig = {};
+  let originalName = null;
+  let dirty = false;
+  let editMode = false;
+  function fillProject(cfg) {
+    loadedConfig = cfg;
+    const p=cfg.project||{}, pa=cfg.paths||{}, pr=cfg.processing||{}, ag=cfg.age_analysis||{};
+    applyConnection(pr);
+    const values = {f_name:p.name, f_loc:p.location, f_y0:p.year_range?.[0], f_y1:p.year_range?.[1],
+      f_lead:p.lead_firm, f_notes:p.notes, f_input:pa.input_dir,
+      f_out:(pa.output_csv || 'output').replace(/.*[/\\]/,'').replace(/\.csv$/i,'')};
+    Object.entries(values).forEach(([id,value]) => document.getElementById(id).value = value ?? '');
+    state.tokens.consultants = p.consultants || []; state.tokens.authorities = p.authorities || [];
+    renderTokens('consultants'); renderTokens('authorities');
+    state.savedSampleN = pr.sample_n ?? 20;
+    state.parallelWorkers = pr.parallel_workers ?? 3; state.apiTimeout = pr.api_timeout ?? 60;
+    document.getElementById('f_sample').value = state.savedSampleN ?? '';
+    document.getElementById('f_workers').value = state.parallelWorkers;
+    document.getElementById('f_timeout').value = state.apiTimeout;
+    state.warnPredatesYears = ag.warn_predates_years ?? 10; state.warnPostprojectYears = ag.warn_postproject_years ?? 3;
+    if (pa.input_dir) countFiles();
+  }
+  async function pickFolder() {
+    try {
+      const response = await fetch('/pick-folder'); const data = await readApiJson(response);
+      if (data.path) { document.getElementById('f_input').value = data.path; dirty = true; countFiles(); }
+      else if (data.error) showErr(3, data.error);
+    } catch { showErr(3, 'Folder picker unavailable. Paste the folder path instead.'); }
+  }
+  document.addEventListener('input', () => { dirty = true; });
+  window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      providerDefaults = await apiJson('/api/providers');
+      const params = new URLSearchParams(location.search);
+      const active = await apiJson('/load-config');
+      if (params.has('new')) {
+        const connection = active.processing ? {provider:active.processing.provider, base_url:active.processing.base_url, model:active.processing.model} : {};
+        const name = params.get('new');
+        fillProject({project:{name, year_range:[2020,2030]}, paths:{output_csv:'outputs/' + (name.replace(/[^a-z0-9_-]/gi,'_') || 'project') + '_' + Date.now() + '.csv'}, processing:connection});
+        loadedConfig = {processing:connection};
+        taxData = await apiJson('/default-taxonomy'); taxLoaded = true;
+      } else if (params.has('project')) {
+        const record = await apiJson('/saved-configs/' + encodeURIComponent(params.get('project')));
+        if (record.error) throw new Error(record.error);
+        originalName = params.get('project'); fillProject(record.config);
+        taxData = record.taxonomy || await apiJson('/default-taxonomy'); taxLoaded = true;
+        editMode = true;
+      } else {
+        fillProject(active);
+        const profiles = await apiJson('/saved-configs');
+        originalName = profiles.find(p => p.name === active.project?.name)?.name || null;
+        editMode = !!active.project?.name;
+        await loadTaxonomy();
+      }
+      renderTaxEditor(); refreshTaxPresetList();
+      if (editMode) {
+        document.getElementById('quickSave').hidden = false;
+        document.querySelector('[data-panel="1"] .page-title').textContent = 'Project settings';
+        document.querySelector('[data-panel="1"] .page-lede').textContent = 'Jump to any section, make your changes, then Save & Return.';
+      }
+      dirty = false; configReady = true;
+      ['f_provider','f_baseurl','f_model','f_apikey','testConnectionBtn','nextBtn'].forEach(id => document.getElementById(id).disabled = false);
+      if (params.get('section') === 'files') goto(3);
+    } catch (error) {
+      configReady = false;
+      ['f_provider','f_baseurl','f_model','f_apikey','testConnectionBtn','nextBtn'].forEach(id => document.getElementById(id).disabled = true);
+      document.getElementById('apikeyBadge').textContent = 'configuration unavailable';
+      showErr(1, error.message || 'Could not load project');
+    }
+  });
+
+  /* ── Collect & Save config ── */
+  function collectConfig() {
+    return {
+      ...loadedConfig,
+      project: {
+        ...(loadedConfig.project || {}),
+        name: v('f_name'), location: v('f_loc'),
+        year_range: [+document.getElementById('f_y0').value, +document.getElementById('f_y1').value],
+        lead_firm: v('f_lead'),
+        consultants: [...state.tokens.consultants],
+        authorities: [...state.tokens.authorities],
+        notes: v('f_notes'),
+      },
+      paths: { ...(loadedConfig.paths || {}), input_dir: v('f_input'), output_csv: 'outputs/' + v('f_out').replace(/^outputs\//,'').replace(/\.csv$/i,'') + '.csv' },
+      processing: {
+        ...(loadedConfig.processing || {}),
+        sample_n: state.savedSampleN,
+        ...connectionFields(),
+        parallel_workers: state.parallelWorkers,
+        api_timeout: state.apiTimeout,
+      },
+      age_analysis: {
+        warn_predates_years: state.warnPredatesYears,
+        warn_postproject_years: state.warnPostprojectYears,
+      },
+    };
+  }
+  async function saveConfigOnly() {
+    for (const step of [1,2,3]) { if (!validate(step)) { goto(step); return false; } }
+    const btn = document.getElementById('nextBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      await loadTaxonomy();
+      const config = collectConfig();
+      const response = await fetch('/save-project', {method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({config, taxonomy:taxData, original_name:originalName})});
+      const data = await readApiJson(response);
+      if (!response.ok || !data.ok) throw new Error(data.error || 'Save failed');
+      originalName = data.name; dirty = false;
+      return true;
+    } catch (error) { goto(5); showErr(5, error.message || 'Could not save project'); return false; }
+    finally { btn.disabled = false; btn.textContent = editMode ? 'Save & Return' : 'Save ✓'; }
+  }
+  function toYaml(obj, indent=0) {
+    const pad=' '.repeat(indent); let out='';
+    for(const [k,val] of Object.entries(obj)) {
+      if(val===null||val===undefined||val===''){ out+=`${pad}${k}:\n`; continue; }
+      if(Array.isArray(val)){ if(!val.length){ out+=`${pad}${k}: []\n`; continue; } out+=`${pad}${k}:\n`; val.forEach(i=>out+=`${pad}- ${i}\n`); }
+      else if(typeof val==='object'){ out+=`${pad}${k}:\n`+toYaml(val,indent+2); }
+      else { out+=`${pad}${k}: ${val}\n`; }
+    }
+    return out;
+  }
+  function downloadYaml() {
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([toYaml(collectConfig())],{type:'text/yaml'}));
+    a.download='config.yaml'; a.click();
+  }
+
+  async function saveAll(run = false) {
+    if (await saveConfigOnly()) window.location.href = run ? '/?run=1' : '/?saved=1';
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  document.addEventListener('keydown', e => {
+    if(e.key==='Enter' && e.target.tagName!=='TEXTAREA' && e.target.tagName!=='SELECT' && e.target.tagName!=='BUTTON' && !e.target.matches('#f_consult,#f_auth,#projUrl,#f_apikey'))
+      if(state.step<TOTAL){ e.preventDefault(); go(+1); }
+  });
+
+  /* ── Hamburger ── */
+  function toggleHam() { document.getElementById('hamMenu').classList.toggle('open'); }
+  function closeHam()  { document.getElementById('hamMenu').classList.remove('open'); }
+  function openDash(e) {
+    e.preventDefault(); closeHam(); window.open('/results-ui', '_blank');
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#hamBtn') && !e.target.closest('#hamMenu')) closeHam();
+  });
+
+  render();
+</script>
+</body>
+</html>

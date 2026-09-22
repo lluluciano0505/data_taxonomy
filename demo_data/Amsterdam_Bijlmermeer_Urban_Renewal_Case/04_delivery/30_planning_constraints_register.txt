@@ -1,0 +1,14 @@
+SYNTHETIC DEMO — illustrative training case, not an authentic project record.
+
+
+PLANNING CONSTRAINTS REGISTER — ILLUSTRATIVE
+
+C-01 — Maintain a step-free emergency and accessible route through the study area.
+C-02 — Demonstrate no unacceptable loss of publicly accessible green space.
+C-03 — Confirm flood storage and discharge with the relevant water authority.
+C-04 — Assess daylight, wind, noise, and privacy for edge infill.
+C-05 — Protect resident continuity and document engagement before intrusive works.
+C-06 — Check memory-sensitive locations and consult authoritative archives before formal interpretation.
+C-07 — Coordinate underground utilities before fixing tree pits, rain gardens, or foundations.
+
+Each constraint is a synthetic prompt, not a legal designation. The project team must verify the applicable Amsterdam policy and statutory framework before submission.

@@ -1,0 +1,131 @@
+asset_types:
+- description: structured or semi-structured datasets (tables, spreadsheets, GIS,
+    surveys, inventories)
+  name: Data
+- description: textual deliverables and reports (PDF/Word/PPT, memos, specs, meeting
+    notes)
+  name: Document
+- description: CAD/BIM design sheets and plans (DWG/DXF/IFC/RVT)
+  name: Drawing
+- description: BIM/federated models, 3D model exchanges, point clouds and model coordination
+    assets
+  name: Model
+- description: engineering calculations, simulation sheets, thermal/structural computation
+    artifacts
+  name: Calculation
+- description: regulatory submissions, permits, authority approvals and compliance
+    certificates
+  name: Statutory
+- description: imagery and audiovisual files (photos, renderings, videos)
+  name: Media
+- description: compressed containers and bundled packages (ZIP/7Z/RAR)
+  name: Archive
+- description: insufficient evidence to determine asset type
+  name: Unknown
+confidentiality_levels:
+- description: contracts, fee proposals, budgets, cost plans, legal agreements, NDAs,
+    invoices, financial models, HR files
+  name: Confidential
+- description: all files without explicit legal/commercial/financial/HR sensitivity,
+    including technical drawings and ordinary internal documents
+  name: Not Confidential
+domains:
+- description: building design, plans, sections, elevations, facades, interior layouts
+  name: Architecture & Buildings
+- description: landscape design, planting, parks, streetscape, public realm and urban
+    renewal open spaces
+  name: Landscape & Public Realm
+- description: foundations, load-bearing systems, steel/concrete/timber structural
+    design
+  name: Structural Engineering
+- description: heating, ventilation, air conditioning, thermal systems and ducting
+  name: MEP - HVAC
+- description: water supply, drainage, sewage, stormwater and plumbing systems
+  name: MEP - Plumbing
+- description: power distribution, lighting, low-voltage systems and electrical infrastructure
+  name: MEP - Electrical
+- description: utilities, roads, bridges, tunnels, grading, external infrastructure
+    works
+  name: Civil & Infrastructure
+- description: pedestrian networks, transit, traffic analysis, cycling routes, parking
+  name: Mobility & Transport
+- description: ecology, biodiversity, hydrology, sustainability, wind/noise studies
+  name: Environment & Climate
+- description: BOQ, estimates, valuations, payments, quantity surveying and commercial
+    controls
+  name: QS & Commercial
+- description: contracts, permits, approvals, legal correspondence and compliance
+    docs
+  name: Administrative & Legal
+- description: schedules, RFIs, transmittals, meeting records and internal coordination
+  name: Project Management
+- description: standards, precedents, benchmark studies and background research
+  name: Reference & Research
+- description: cannot determine from available information
+  name: Unknown
+governance_sources:
+- description: Generated internally by lead firm or core team
+  name: Internal
+- description: Sourced from external consultants or third parties
+  name: External
+- description: Deliverables from design/engineering consultants
+  name: Consultant
+- description: Work from development partners or joint venture partners
+  name: Partner
+- description: Submissions from regulatory/authority sources
+  name: Authority
+- description: Supplier/contractor documentation
+  name: Vendor
+- description: Source cannot be determined from available evidence
+  name: Unknown
+information_types:
+- description: drawings, diagrams, CAD/BIM and technical content
+  name: Schematic / Technical
+- description: tables, spreadsheets, calculations, structured data
+  name: Quantitative / Tabular
+- description: reports, notes, specifications, correspondence
+  name: Narrative / Textual
+- description: GIS, maps, geographic data
+  name: Spatial / Cartographic
+- description: photos, renders, images, video
+  name: Visual / Media
+- description: compressed or bundled packages
+  name: Archive
+- description: cannot determine
+  name: Unknown
+lifecycle_stages:
+- description: design competition entries, competition boards, RFP responses and bid-stage
+    submissions
+  name: Competition
+- description: early ideas, vision docs, feasibility studies, concept and SD-phase
+    drawings
+  name: Concept / Schematic
+- description: DD-phase developed layouts, coordinated discipline inputs and technical
+    refinement
+  name: Design Development
+- description: permit sets, issue-for-construction packages and final specifications
+  name: Construction Documents
+- description: construction-phase support — site instructions, RFIs, submittals and
+    change orders
+  name: Construction Administration
+- description: final built condition, as-built records and handover submissions
+  name: As-Built / Handover
+- description: cannot determine from available information
+  name: Unknown
+scales:
+- description: interior details, room-level layouts, component-level drawings
+  name: Component / Room
+- description: single floor plans, level coordination and floor-specific documentation
+  name: Floor / Level
+- description: parcel/red-line scope, block-level planning and design packages
+  name: Plot / Block
+- description: urban block, district, zone or precinct scale
+  name: Neighborhood / District
+- description: city-wide or municipal-scale planning and strategy
+  name: City / Municipal
+- description: cross-city or metro-region planning and infrastructure scope
+  name: Metropolitan
+- description: regional, national or cross-boundary policy/infrastructure scale
+  name: Regional / National
+- description: no meaningful geographic scope
+  name: Non-spatial

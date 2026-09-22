@@ -1,0 +1,2628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataTaxonomy — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<style>
+  :root {
+    /* ── Base surfaces ─────────────────────────────────────── */
+    --bg:          #FAFAF8;
+    --surface:     #FFFFFF;
+    --surface-2:   #F5F4F0;
+    --hover:       #F0EEE8;
+
+    /* ── Text ──────────────────────────────────────────────── */
+    --fg:          #1C1C1E;
+    --fg-2:        #2E2E32;
+    --muted:       #6B6B6B;
+    --muted-2:     #9A9A9A;
+
+    /* ── Borders ───────────────────────────────────────────── */
+    --border:      #E8E4DC;
+    --hairline:    #E8E4DC;
+    --hairline-s:  #F0EDE5;
+    --hairline-h:  #D9D3C7;
+
+    /* ── Accent (RESERVED: buttons + links only) ───────────── */
+    --accent:      #C7522A;
+    --accent-2:    #B4451F;
+    --accent-3:    #FBEFE9;
+    --accent-fg:   #FFFFFF;
+
+    /* ── Priority badges (fg / bg pairs) ──────────────────── */
+    --prio-critical-fg: #DC2626;  --prio-critical-bg: #FEF2F2;
+    --prio-high-fg:     #EA580C;  --prio-high-bg:     #FFF7ED;
+    --prio-medium-fg:   #CA8A04;  --prio-medium-bg:   #FEFCE8;
+    --prio-low-fg:      #16A34A;  --prio-low-bg:      #F0FDF4;
+
+    /* ── Semantic aliases ──────────────────────────────────── */
+    --err:    var(--prio-critical-fg);  --err-bg:   var(--prio-critical-bg);
+    --warn:   var(--prio-high-fg);      --warn-bg:  var(--prio-high-bg);
+    --ok:     var(--prio-low-fg);       --ok-bg:    var(--prio-low-bg);
+
+    /* ── Shadows ───────────────────────────────────────────── */
+    --shadow-0:     0 0 0 transparent;
+    --shadow-1:     0 1px 2px rgba(28,28,30,0.04);
+    --shadow-2:     0 4px 12px rgba(28,28,30,0.06);
+    --shadow-3:     0 8px 24px rgba(28,28,30,0.08);
+    --shadow-toast: 0 12px 32px rgba(28,28,30,0.14);
+
+    /* ── Radii ─────────────────────────────────────────────── */
+    --r-0:    0px;
+    --r-1:    4px;
+    --r-2:    6px;
+    --r-3:    8px;
+    --r-pill: 999px;
+
+    /* ── Focus ring ────────────────────────────────────────── */
+    --focus-ring: 0 0 0 3px rgba(199,82,42,0.18);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg); color: var(--fg);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 300; font-size: 13px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased; min-height: 100vh;
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  .label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* ── Shell ───────────────────────────────────────────── */
+  .shell { max-width: 1360px; margin: 0 auto; padding: 28px 32px 120px; background: var(--bg); min-height: 100vh; border-left: 1px solid var(--hairline); border-right: 1px solid var(--hairline); }
+
+  /* ── Topbar ──────────────────────────────────────────── */
+  header.topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-3);
+    box-shadow: var(--shadow-1);
+    padding: 14px 20px;
+    margin-bottom: 28px;
+    gap: 24px;
+  }
+  .brand { font-family: 'JetBrains Mono'; font-size: 13px; letter-spacing: 0.08em; }
+  .brand b { font-weight: 500; }
+  /* ── Hamburger nav ── */
+  .ham-wrap { position: relative; display: flex; align-items: center; }
+  .ham-btn {
+    background: none; border: none; cursor: pointer;
+    padding: 4px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .ham-btn span { display: block; width: 16px; height: 1px; background: var(--muted); transition: background .2s; }
+  .ham-btn:hover span { background: var(--fg); }
+  .ham-menu {
+    position: absolute; top: calc(100% + 8px); right: 0;
+    background: var(--surface); border: 1px solid var(--hairline);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    min-width: 240px; border-radius: 2px; overflow: hidden;
+    display: none; z-index: 999;
+  }
+  .ham-menu.open { display: block; }
+  .ham-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; font-size: 12px; cursor: pointer;
+    transition: background .15s; color: var(--fg); text-decoration: none;
+    background: none; border: none; width: 100%; text-align: left;
+  }
+  .ham-item:hover { background: var(--bg); }
+  .ham-icon { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--muted); min-width: 14px; }
+  .ham-sep { height: 1px; background: var(--hairline); margin: 4px 0; }
+  .ham-csv {
+    padding: 12px 14px 10px;
+    display: flex; align-items: baseline; gap: 8px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .ham-csv .label { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; }
+  .ham-csv select {
+    flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--hairline);
+    font-family: 'JetBrains Mono'; font-size: 11px; color: var(--fg);
+    padding: 2px 4px 3px; min-width: 0;
+  }
+  .ham-csv select:focus { outline: none; border-bottom-color: var(--fg); }
+  .csv-picker {
+    display: flex; align-items: baseline; gap: 10px;
+    border-left: 1px solid var(--hairline); padding-left: 20px;
+  }
+  .csv-picker select {
+    background: transparent; border: none; border-bottom: 1px solid var(--hairline);
+    font-family: inherit; font-size: 12px; color: var(--fg);
+    padding: 2px 16px 3px 0; max-width: 280px;
+  }
+  .csv-picker select:focus { outline: none; border-bottom-color: var(--fg); }
+  .linkbtn {
+    font-family: 'JetBrains Mono'; font-size: 10px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); background: transparent; border: none;
+    padding: 6px 0; position: relative;
+    transition: color .2s;
+  }
+  .linkbtn::after {
+    content: ''; position: absolute; bottom: 2px; left: 0;
+    width: 100%; height: 1px; background: currentColor;
+    transform: scaleX(0); transform-origin: right;
+    transition: transform .3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .linkbtn:hover { color: var(--accent); }
+  .linkbtn:hover::after { transform: scaleX(1); transform-origin: left; }
+
+  /* ── Sync panel ─────────────────────────────────────── */
+  .sync-panel {
+    border-bottom: 1px solid var(--hairline);
+    overflow: hidden; max-height: 0;
+    transition: max-height .3s ease, padding .3s ease;
+    padding: 0 40px; background: var(--bg);
+  }
+  .sync-panel.open { max-height: 200px; padding: 14px 40px; }
+  .sync-row { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+  .sync-stat { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--muted); }
+  .sync-stat b { color: var(--fg); }
+  .sync-prog-wrap { height: 3px; background: var(--hairline); border-radius: 2px; margin-top: 10px; display: none; }
+  .sync-prog-bar { height: 100%; background: var(--ok); width: 0%; border-radius: 2px; transition: width .2s; }
+  .sync-log { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-top: 6px; min-height: 14px; }
+
+  /* ── Page title ──────────────────────────────────────── */
+  .page-hd {
+    display: flex; align-items: baseline; gap: 16px;
+    margin-bottom: 28px;
+  }
+  .page-hd h1 {
+    font-family: 'Inter'; font-weight: 300; font-size: 28px;
+    letter-spacing: -0.02em; line-height: 1.1;
+  }
+  .page-hd .badge {
+    font-family: 'JetBrains Mono'; font-size: 10px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 3px 9px; border: 1px solid var(--hairline); color: var(--muted);
+  }
+  .page-hd .meta {
+    font-family: 'JetBrains Mono'; font-size: 11px; color: var(--muted);
+    margin-left: auto;
+  }
+
+  /* ── Section dividers ────────────────────────────────── */
+  .sec {
+    display: flex; align-items: center; gap: 14px;
+    margin: 36px 0 20px;
+  }
+  .sec .label { white-space: nowrap; }
+  .sec .line { flex: 1; height: 1px; background: var(--hairline); }
+  .sec .count {
+    font-family: 'JetBrains Mono'; font-size: 10px; color: var(--muted);
+    border: 1px solid var(--hairline); padding: 1px 8px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── KPI grid — 2×2 compact cards ──────────────────── */
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 10px; margin-bottom: 0;
+  }
+  .kpi {
+    padding: 14px 16px 16px;
+    display: flex; flex-direction: column; gap: 4px; min-height: 64px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-3);
+    box-shadow: var(--shadow-1);
+  }
+  .kpi .val { font-size: 26px; font-weight: 300; letter-spacing: -0.02em; line-height: 1; font-family: 'Inter'; }
+
+  /* ── Filter pills ───────────────────────────────────── */
+  .filter-row {
+    display: flex; gap: 28px; flex-wrap: wrap; margin-bottom: 20px;
+    align-items: flex-start;
+  }
+  .filter-field { display: flex; flex-direction: column; gap: 8px; min-width: 220px; }
+  .filter-field .label { display: inline-block; }
+  .pill-group { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill {
+    font-family: 'JetBrains Mono'; font-size: 11px;
+    padding: 4px 10px; border: 1px solid var(--border);
+    border-radius: var(--r-pill);
+    background: transparent; color: var(--fg); cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .pill:hover { border-color: var(--fg); }
+  .pill.active { background: var(--fg); color: #fff; border-color: var(--fg); }
+  .pill.disabled { opacity: 0.32; cursor: not-allowed; pointer-events: none; }
+  .pill-clear {
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted);
+    padding: 4px 0; margin-left: 6px;
+    background: transparent; border: none;
+  }
+  .pill-clear:hover { color: var(--fg); }
+
+  /* ── Dim pills ───────────────────────────────────────── */
+  .dim-pill {
+    font-size: 11px; padding: 3px 9px; border-radius: 12px; cursor: pointer;
+    border: 1px solid var(--hairline); background: var(--surface); color: var(--muted);
+    user-select: none; transition: background 0.12s, color 0.12s;
+  }
+  .dim-pill.active {
+    background: #166534; color: #fff; border-color: #166534;
+  }
+  .grp-pill {
+    font-size: 11px; padding: 3px 9px; border-radius: 12px; cursor: pointer;
+    border: 1px solid var(--hairline); background: var(--surface); color: var(--muted);
+    user-select: none; transition: background 0.12s, color 0.12s;
+  }
+  .grp-pill.active {
+    background: #166534; color: #fff; border-color: #166534;
+  }
+
+  /* ── Charts ──────────────────────────────────────────── */
+  .charts-row {
+    display: grid; grid-template-columns: 1.5fr 1fr; gap: 32px; margin-top: 8px;
+  }
+  .chart-panel { display: flex; flex-direction: column; gap: 10px; }
+  .chart-title {
+    font-size: 13px; font-weight: 400; color: var(--fg);
+  }
+  .chart-title .mute { color: var(--muted); font-weight: 300; margin-left: 8px; font-size: 12px; }
+  .chart-box {
+    border: 1px solid var(--hairline); background: var(--surface);
+    height: 420px; position: relative;
+  }
+  .chart-empty {
+    display: flex; align-items: center; justify-content: center;
+    padding: 60px 20px; color: var(--muted); font-size: 12px;
+  }
+
+  .tabs {
+    display: flex; gap: 28px; border-bottom: 1px solid var(--hairline);
+    margin-bottom: 24px;
+  }
+  .tab {
+    background: transparent; border: none; padding: 10px 0;
+    font-family: 'JetBrains Mono'; font-size: 11px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); position: relative; cursor: pointer;
+    transition: color .2s;
+  }
+  .tab::after {
+    content: ''; position: absolute; bottom: -1px; left: 0;
+    width: 100%; height: 1px; background: var(--fg);
+    transform: scaleX(0); transform-origin: right;
+    transition: transform .3s cubic-bezier(0.16,1,0.3,1);
+  }
+  .tab:hover { color: var(--fg); }
+  .tab.active { color: var(--fg); }
+  .tab.active::after { transform: scaleX(1); transform-origin: left; }
+  .tab .ct { margin-left: 6px; color: var(--muted); font-weight: 400; }
+  .tab.active .ct { color: var(--fg); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Priority ledger (tiered reading list) ── */
+  .pl-band  { border: 1px solid var(--hairline); border-radius: 10px; margin-bottom: 10px; background: #fff; overflow: hidden; }
+  .pl-head  { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; user-select: none; }
+  .pl-head:hover { background: #f7f5f1; }
+  .pl-caret { font-size: 10px; color: var(--muted); width: 12px; flex-shrink: 0; }
+  .pl-dot   { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .pl-name  { font-weight: 700; font-size: 13px; letter-spacing: .04em; white-space: nowrap; }
+  .pl-tag   { font-size: 11px; color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pl-ct    { font-size: 11px; color: var(--muted); font-family: var(--mono); flex-shrink: 0; }
+  .pl-rows  { border-top: 1px solid var(--hairline); }
+  .pl-row   { display: flex; gap: 12px; align-items: baseline; padding: 9px 16px 9px 38px; border-bottom: 1px solid var(--hairline); cursor: pointer; font-size: 12px; }
+  .pl-row:last-child { border-bottom: none; }
+  .pl-row:hover { background: #f5f3ef; }
+  .pl-rank  { font-family: var(--mono); color: var(--muted); font-size: 11px; min-width: 26px; text-align: right; flex-shrink: 0; }
+  .pl-file  { font-weight: 600; max-width: 34%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pl-lvls  { color: #555; font-size: 11px; white-space: nowrap; flex-shrink: 0; }
+  .pl-why   { color: var(--muted); font-size: 11px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pl-empty { padding: 10px 16px; color: var(--muted); font-size: 11px; }
+  .pl-foot  { color: var(--muted); font-size: 11px; padding: 8px 2px; }
+
+  /* ── Search + inline controls ───────────────────────── */
+  .inline-ctrl-row {
+    display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end;
+    margin-bottom: 20px;
+  }
+  .field {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .search-input {
+    background: var(--surface); color: var(--fg);
+    border: 1px solid var(--border); border-radius: var(--r-1);
+    padding: 8px 12px;
+    font-family: inherit; font-size: 13px;
+    min-width: 320px; transition: border-color .2s, box-shadow .2s;
+  }
+  .search-input:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
+  .search-input::placeholder { color: var(--muted-2); }
+
+  .meta-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: 'JetBrains Mono'; font-size: 11px; color: var(--muted);
+    margin: 12px 0 16px;
+  }
+
+  /* ── Table (hairline, no cards) ─────────────────────── */
+  .table-wrap {
+    border: 1px solid var(--border);
+    border-radius: var(--r-3);
+    box-shadow: var(--shadow-1);
+    overflow: hidden;
+    overflow-y: auto;
+    max-height: 540px;
+  }
+  table.data {
+    width: 100%; border-collapse: collapse; background: var(--surface);
+  }
+  table.data thead th {
+    font-family: 'JetBrains Mono'; font-size: 10px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+    text-align: left; font-weight: 500;
+    padding: 12px 14px; background: var(--surface-2);
+    border-bottom: 1px solid var(--hairline);
+    position: sticky; top: 0; z-index: 1;
+  }
+  table.data thead th.sortable { cursor: pointer; user-select: none; }
+  table.data thead th.sortable:hover { color: var(--fg); }
+  table.data thead th.sort-active { color: var(--fg); }
+  .sort-arrow { margin-left: 5px; opacity: 0.4; font-style: normal; }
+  th.sort-active .sort-arrow { opacity: 1; }
+  table.data tbody tr.kb-focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+  table.data tbody td {
+    padding: 14px; font-size: 13px; color: var(--fg);
+    border-bottom: 1px solid var(--hairline-s);
+    vertical-align: top;
+  }
+  table.data tbody tr { cursor: pointer; transition: background .12s; }
+  table.data tbody tr:hover { background: var(--hover); }
+  table.data tbody tr.selected { background: var(--hover); }
+  table.data tbody td.mono { font-family: 'JetBrains Mono'; font-size: 12px; }
+  table.data tbody tr:last-child td { border-bottom: none; }
+  .cell-fn { font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 500; }
+  .cell-sum { color: var(--muted); font-size: 12px; }
+  .dim { color: var(--muted); }
+  .tag-chip {
+    display: inline-block; font-family: 'JetBrains Mono'; font-size: 10px;
+    padding: 1px 7px; border: 1px solid var(--hairline); letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .tag-chip.red    { color: var(--err);  border-color: var(--err-bg);  background: var(--err-bg); }
+  .tag-chip.amber  { color: var(--warn); border-color: var(--warn-bg); background: var(--warn-bg); }
+  .tag-chip.ok     { color: var(--ok);   border-color: var(--ok-bg);   background: var(--ok-bg); }
+  .tag-chip.mute   { color: var(--muted); }
+
+  /* ── Priority badges ────────────────────────────────── */
+  .prio {
+    display: inline-block; font-family: 'JetBrains Mono'; font-size: 10px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: var(--r-2); border: none; white-space: nowrap;
+  }
+  .prio.critical { color: var(--prio-critical-fg); background: var(--prio-critical-bg); }
+  .prio.high     { color: var(--prio-high-fg);     background: var(--prio-high-bg); }
+  .prio.medium   { color: var(--prio-medium-fg);   background: var(--prio-medium-bg); }
+  .prio.low      { color: var(--prio-low-fg);      background: var(--prio-low-bg); }
+
+  /* ── File detail card ───────────────────────────────── */
+  .detail-panel {
+    border: 1px solid var(--hairline); background: var(--surface);
+    margin-top: 24px; padding: 28px 32px;
+  }
+  .detail-hd {
+    display: flex; align-items: baseline; gap: 16px;
+    padding-bottom: 16px; border-bottom: 1px solid var(--hairline);
+    margin-bottom: 20px;
+  }
+  .detail-hd h2 {
+    font-family: 'Inter'; font-weight: 300; font-size: 20px;
+    letter-spacing: -0.01em; line-height: 1.3; word-break: break-all;
+  }
+  .detail-hd .actions { display: flex; gap: 12px; margin-left: auto; }
+  .detail-hd .actions button { flex-shrink: 0; }
+  .btn-ghost {
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted);
+    background: transparent; border: 1px solid var(--hairline);
+    padding: 6px 12px; transition: color .2s, border-color .2s;
+  }
+  .btn-ghost:hover { color: var(--fg); border-color: var(--fg); }
+  .btn-primary {
+    font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--fg); color: #fff; border: 1px solid var(--fg);
+    padding: 6px 14px; transition: background .2s;
+  }
+  .btn-primary:hover { background: #333; }
+
+  .detail-body {
+    display: grid; grid-template-columns: minmax(240px, 1fr) minmax(0, 1.8fr); gap: 32px;
+    margin-bottom: 24px;
+  }
+  .preview-box {
+    border: 1px solid var(--hairline); background: var(--bg);
+    min-height: 240px; max-height: 480px; overflow: auto;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .preview-box img { max-width: 100%; display: block; }
+  .preview-box pre {
+    white-space: pre-wrap; word-break: break-word; font-family: 'JetBrains Mono';
+    font-size: 11px; padding: 16px; color: var(--fg);
+    width: 100%; height: 100%; max-height: 520px; overflow: auto;
+  }
+  .preview-table {
+    width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono';
+    font-size: 11px; background: var(--surface);
+  }
+  .preview-table th, .preview-table td {
+    padding: 6px 10px; border: 1px solid var(--hairline);
+    text-align: left; vertical-align: top;
+  }
+  .preview-table th { background: var(--bg); font-weight: 500; color: var(--muted); }
+
+  .meta-grid {
+    display: grid; grid-template-columns: auto 1fr; gap: 10px 20px;
+    align-content: start;
+  }
+  .meta-grid .k {
+    font-family: 'JetBrains Mono'; font-size: 10px;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+    padding-top: 2px;
+  }
+  .meta-grid .v { font-size: 13px; color: var(--fg); word-break: break-word; }
+  .meta-grid .v.dim { color: var(--muted); }
+  .summary-block {
+    grid-column: 1 / -1; font-size: 13px; color: var(--fg); line-height: 1.6;
+    padding-bottom: 14px; border-bottom: 1px solid var(--hairline-s); margin-bottom: 6px;
+    font-style: italic;
+  }
+  .review-flag {
+    grid-column: 1 / -1; margin-top: 14px; padding: 10px 14px;
+    border: 1px solid #fde68a; background: #fffbeb; color: var(--warn); font-size: 12px;
+  }
+  .review-flag.high { border-color: #fecaca; background: #fff5f5; color: var(--err); }
+
+  .detail-impact {
+    border-top: 1px solid var(--hairline); padding-top: 24px;
+    margin-top: 8px;
+  }
+  .detail-impact .label { display: block; margin-bottom: 14px; }
+  .impact-charts {
+    display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px;
+  }
+  .impact-reason {
+    font-size: 12px; color: var(--muted); font-style: italic;
+    margin-top: 10px; padding-left: 16px; border-left: 2px solid var(--hairline);
+  }
+
+  /* ── Review Queue cards ─────────────────────────────── */
+  .rq-pagination {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 16px 0; border-bottom: 1px solid var(--hairline); margin-bottom: 20px;
+  }
+  .rq-pagination .nav { display: flex; gap: 12px; }
+
+  .rq-card {
+    border: 1px solid var(--border); background: var(--surface);
+    border-radius: var(--r-3); box-shadow: var(--shadow-1);
+    padding: 24px 28px; margin-bottom: 20px;
+  }
+  .rq-card.reviewed { opacity: 0.5; }
+  .rq-card .rq-hd {
+    display: flex; align-items: baseline; gap: 16px;
+    padding-bottom: 14px; border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .rq-card .rq-hd h3 {
+    font-family: 'Inter'; font-weight: 400; font-size: 16px;
+    letter-spacing: -0.01em; word-break: break-all;
+  }
+  /* .rq-card .rq-hd .prio — uses global .prio token rules above */
+  .rq-card .rq-hd .actions { display: flex; gap: 10px; margin-left: auto; }
+
+  .rq-summaries {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    padding-bottom: 16px; margin-bottom: 16px;
+    border-bottom: 1px solid var(--hairline-s);
+  }
+  .rq-summaries .block .label { display: block; margin-bottom: 8px; }
+  .rq-reason { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .rq-summary-edit {
+    width: 100%; background: transparent; border: 1px solid var(--hairline);
+    padding: 10px 12px; font-family: inherit; font-size: 13px;
+    color: var(--fg); resize: vertical; min-height: 70px; line-height: 1.55;
+  }
+  .rq-summary-edit:focus { outline: none; border-color: var(--fg); }
+
+  .rq-body {
+    display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px;
+  }
+  .rq-preview {
+    border: 1px solid var(--hairline); background: var(--bg);
+    min-height: 240px; max-height: 340px; overflow: auto;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .rq-preview img { max-width: 100%; display: block; }
+  .rq-preview pre {
+    white-space: pre-wrap; word-break: break-word;
+    font-family: 'JetBrains Mono'; font-size: 10px; padding: 12px; color: var(--fg);
+    width: 100%; height: 100%; overflow: auto;
+  }
+  .rq-edits {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px;
+  }
+  .rq-edits .field { gap: 4px; }
+  .rq-edits select {
+    background: transparent; border: none;
+    border-bottom: 1px solid var(--hairline); padding: 6px 0 6px;
+    font-family: inherit; font-size: 13px; color: var(--fg);
+    width: 100%;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1 L5 5 L9 1' stroke='%23737373' stroke-width='1' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 4px center;
+    -webkit-appearance: none; appearance: none; padding-right: 20px;
+  }
+  .rq-edits select:focus { outline: none; border-bottom-color: var(--fg); }
+  .rq-edits .field.full { grid-column: 1 / -1; }
+
+  /* ── Deep Analysis panel ─────────────────────────────── */
+  .da-panel {
+    margin-top: 12px; border-top: 1px solid var(--hairline);
+    padding-top: 12px; display: none;
+  }
+  .da-panel.open { display: block; }
+  .da-panel .da-status {
+    font-family: 'JetBrains Mono'; font-size: 11px; color: var(--muted);
+    letter-spacing: .05em; margin-bottom: 10px;
+  }
+  .da-panel .da-evidence {
+    font-family: 'JetBrains Mono'; font-size: 11px; color: var(--muted);
+    margin-bottom: 10px; line-height: 1.7;
+  }
+  .da-panel .da-scores {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 8px; margin-bottom: 10px;
+  }
+  .da-panel .da-dim {
+    border: 1px solid var(--hairline); padding: 8px;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .da-panel .da-dim .dim-name {
+    font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+  }
+  .da-panel .da-dim .dim-val {
+    font-size: 22px; font-weight: 700; font-family: 'JetBrains Mono';
+  }
+  .da-panel .da-dim .dim-reason { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .da-panel .da-score-row {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+  }
+  .da-panel .da-total {
+    font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono';
+  }
+  .da-panel .da-reason { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .da-panel .da-apply {
+    margin-top: 10px;
+    padding: 6px 14px; font-size: 11px; font-family: 'JetBrains Mono';
+    letter-spacing: .05em; text-transform: uppercase;
+    background: var(--fg); color: #fff; border: none; cursor: pointer;
+  }
+  .da-panel .da-apply:hover { opacity: .8; }
+
+  /* ── Loading / Empty ─────────────────────────────────── */
+  .state-empty {
+    padding: 40px 0; text-align: center; color: var(--muted); font-size: 12px;
+    font-family: 'JetBrains Mono'; letter-spacing: .05em;
+  }
+  .state-banner {
+    padding: 14px 18px; border: 1px solid var(--hairline); background: var(--surface);
+    font-size: 12px; color: var(--muted); text-align: center;
+    font-family: 'JetBrains Mono'; letter-spacing: .05em;
+  }
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    background: var(--fg); color: #fff; font-family: 'JetBrains Mono';
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 10px 18px; border-radius: 0;
+    opacity: 0; transition: opacity .25s, transform .25s;
+    pointer-events: none; z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-8px); }
+  .toast.err  { background: var(--err); }
+
+  /* Responsive tweaks */
+  @media (max-width: 1060px) {
+    .shell { padding: 20px 16px 80px; }
+    .kpi-strip { flex-wrap: wrap; }
+    .panel-body { grid-template-columns: 1fr; gap: 20px 0; }
+    .panel-left { border-right: none; padding-right: 0; border-bottom: 1px solid var(--hairline); padding-bottom: 16px; }
+    .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+    .charts-row, .detail-body, .rq-body, .rq-summaries, .impact-charts, .rq-edits {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .kw-block { grid-column: 1 / -1; font-family: 'JetBrains Mono'; font-size: 10px; color: var(--muted); line-height: 1.7; padding: 6px 0 10px; border-bottom: 1px solid var(--hairline); }
+  .fd-dims    { display: flex; flex-direction: column; gap: 6px; }
+  .fd-dim     { display: grid; grid-template-columns: 120px 1fr 26px; gap: 12px; align-items: center; }
+  .fd-dim-reason { grid-column: 1 / -1; font-family: 'Inter'; font-size: 11px; color: var(--muted); font-style: italic; margin-top: -4px; line-height: 1.5; }
+  .fd-dim-k   { font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .fd-dim-bar { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+  .fd-dim-bar > div { height: 100%; background: var(--fg); border-radius: 3px; }
+  .fd-dim-v   { font-family: 'JetBrains Mono'; font-size: 11px; color: var(--fg); text-align: right; font-weight: 500; }
+
+  /* ── Part 1: KPI strip ───────────────────────────── */
+  .kpi-strip {
+    display: flex; gap: 14px; margin-top: 20px;
+  }
+  .kpi-strip .kpi { flex: 1; }
+
+  /* ── Part 2: Chart panels ─────────────────────────── */
+  .named-panel {
+    border: 1px solid var(--hairline); border-radius: 6px;
+    margin-top: 20px; padding: 20px 24px;
+    background: var(--surface);
+  }
+  .named-panel.hidden { display: none; }
+  .hidden { display: none !important; }
+  .panel-switch-btn {
+    font-size: 11px; letter-spacing: .08em; font-weight: 500;
+    color: var(--muted); cursor: pointer; background: none;
+    border: none; padding: 0; font-family: inherit;
+  }
+  .panel-switch-btn:hover { color: var(--fg); }
+  .panel-switch-btn.active { color: var(--fg); }
+  .panel-hd {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 18px; padding-bottom: 14px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .panel-body {
+    display: grid; grid-template-columns: 220px 1fr;
+    gap: 0 24px; align-items: start;
+  }
+  .panel-left {
+    border-right: 1px solid var(--hairline);
+    padding-right: 20px; padding-top: 4px;
+  }
+  .radar-checklist {
+    padding-top: 4px;
+  }
+  .outlier-section {
+    margin-top: 24px; padding-top: 20px;
+    border-top: 1px solid var(--hairline);
+  }
+
+  /* ── Part 3: File explorer ────────────────────────── */
+  .bottom-area {
+    border-top: 1px solid var(--hairline);
+    margin-top: 20px; padding-top: 24px;
+  }
+
+  .cell-sum { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .score-details { margin-top: 12px; }
+  .score-details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+  .score-details[open] summary { margin-bottom: 12px; }
+
+  #quadrant-content .panel-left { border-right: 0; }
+  #struct-filter-pills .pill { font-family: inherit; letter-spacing: 0; font-size: 12px; border-color: transparent; background: transparent; padding: 5px 8px; }
+  #struct-filter-pills .pill.active { background: var(--surface-2); border-color: var(--hairline); color: var(--fg); }
+  #struct-filter-pills .pill:hover { background: var(--surface-2); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ── Topbar ───────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="brand"><b>DataTaxonomy</b> · Dashboard</div>
+    <span id="meta-line" style="font-family:'JetBrains Mono';font-size:11px;color:var(--muted);">—</span>
+    <div class="ham-wrap">
+      <button class="ham-btn" id="hamBtn" onclick="toggleHam()" aria-label="Navigation menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="ham-menu" id="hamMenu">
+        <div class="ham-csv">
+          <span class="label">CSV</span>
+          <select id="csv-select"></select>
+        </div>
+        <button class="ham-item" id="btn-refresh">
+          <span class="ham-icon">↻</span><span>Refresh</span>
+        </button>
+        <button class="ham-item" id="btn-sync">
+          <span class="ham-icon">＋</span><span>Sync</span>
+        </button>
+        <div class="ham-sep"></div>
+        <a class="ham-item" href="/project-ui?page=home" target="_blank">
+          <span class="ham-icon">01</span><span>Home</span>
+        </a>
+        <a class="ham-item" href="/project-ui?page=settings" target="_blank">
+          <span class="ham-icon">02</span><span>Settings</span>
+        </a>
+        <a class="ham-item" href="/project-ui?page=taxonomy" target="_blank">
+          <span class="ham-icon">03</span><span>Taxonomy</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Sync panel ──────────────────────────────────── -->
+  <div class="sync-panel" id="sync-panel">
+    <div class="sync-row">
+      <span class="sync-stat">Source: <b id="sync-root">—</b></span>
+      <span class="sync-stat">Processed: <b id="sync-processed">—</b></span>
+      <span class="sync-stat">New files: <b id="sync-new">—</b></span>
+      <button class="linkbtn" id="sync-run-btn" style="display:none">Run →</button>
+      <span class="sync-stat" id="sync-status"></span>
+    </div>
+    <div class="sync-prog-wrap" id="sync-prog-wrap">
+      <div class="sync-prog-bar" id="sync-prog-bar"></div>
+    </div>
+    <div class="sync-log" id="sync-log"></div>
+  </div>
+
+  <!-- ── Part 1: KPI strip ────────────────────────── -->
+  <div class="kpi-strip">
+    <div class="kpi"><span class="label">Total files</span>
+      <div class="val" id="k-total">—</div>
+    </div>
+    <div class="kpi"><span class="label">Need review</span>
+      <div class="val" id="k-review">—</div>
+    </div>
+    <div class="kpi"><span class="label">Confidential</span>
+      <div class="val" id="k-conf">—</div>
+    </div>
+    <div class="kpi"><span class="label">Auto-process</span>
+      <div class="val" id="k-auto">—</div>
+    </div>
+  </div>
+
+  <!-- ── Part 2: Analysis panel (always open, switch between 04 / 05) ── -->
+  <div id="analysis-panel" class="named-panel">
+    <div class="panel-hd">
+      <button class="panel-switch-btn active" data-mode="quadrant" onclick="switchAnalysis('quadrant')">Priority</button>
+      <span style="color:var(--hairline);user-select:none;">|</span>
+      <button class="panel-switch-btn" data-mode="radar" onclick="switchAnalysis('radar')">Compare</button>
+      <span id="quadrant-mode-btns" style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+        <button id="qc-domain" class="pill active" style="font-size:10px; padding:2px 8px;" onclick="setQuadrantColor('domain')">Category</button>
+        <button id="qc-score" class="pill" style="font-size:10px; padding:2px 8px;" onclick="setQuadrantColor('score')">Score</button>
+      </span>
+    </div>
+
+    <!-- 04 Decision Priority content -->
+    <div id="quadrant-content">
+      <div class="panel-body">
+        <div class="panel-left">
+          <div style="display:flex; align-items:baseline; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
+            <span class="label" style="white-space:nowrap; font-size:10px;">Filter by</span>
+            <select id="struct-filter-dim" style="font-size:11px; font-family:inherit;
+              border:1px solid var(--hairline); background:var(--surface); color:var(--fg);
+              padding:2px 6px; cursor:pointer; border-radius:3px; flex-shrink:0;">
+              <option value="domain">Domain</option>
+              <option value="scale">Scale</option>
+              <option value="lifecycle">Lifecycle</option>
+              <option value="asset_type">Asset Type</option>
+              <option value="information_type">Info Type</option>
+              <option value="governance">Governance</option>
+              <option value="confidentiality">Confidentiality</option>
+            </select>
+          </div>
+          <div class="pill-group" id="struct-filter-pills"></div>
+        </div>
+        <div class="chart-box" id="chart-quadrant" style="height:540px; min-width:0;"></div>
+      </div>
+    </div>
+
+    <!-- 05 Radar Comparison content -->
+    <div id="radar-content" class="hidden">
+      <div class="panel-body" style="grid-template-columns: 220px 1fr 200px;">
+        <div class="panel-left radar-checklist">
+          <div style="display:flex; align-items:baseline; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
+            <span class="label" style="white-space:nowrap; font-size:10px;">Compare by</span>
+            <select id="radar-dim" style="font-size:11px; font-family:inherit;
+              border:1px solid var(--hairline); background:var(--surface); color:var(--fg);
+              padding:2px 6px; cursor:pointer; border-radius:3px; flex-shrink:0;"
+              onchange="changeRadarDim()">
+              <option value="domain">Domain</option>
+              <option value="scale">Scale</option>
+              <option value="lifecycle">Lifecycle</option>
+              <option value="asset_type">Asset Type</option>
+              <option value="information_type">Info Type</option>
+              <option value="governance">Governance</option>
+              <option value="confidentiality">Confidentiality</option>
+            </select>
+          </div>
+          <div id="radar-item-list"></div>
+        </div>
+        <div class="chart-box" id="chart-domain-radar" style="height:420px;"></div>
+        <div id="radar-file-list" style="
+          border-left:1px solid var(--hairline); padding-left:16px; padding-top:4px;
+          height:420px; overflow-y:auto; font-size:11px;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Bottom: file explorer (full width) ────────── -->
+  <div class="bottom-area">
+
+    <div class="inline-ctrl-row" style="margin-bottom:14px; flex-wrap:wrap;">
+      <div class="field" style="flex:1; min-width:240px;">
+        <span class="label">Search</span>
+        <input type="text" id="all-search" class="search-input"
+               placeholder="Search files…" />
+      </div>
+      <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
+        <span class="label" style="white-space:nowrap;">Filter by</span>
+        <select id="all-filter-dim" style="font-size:11px; font-family:inherit;
+          border:1px solid var(--hairline); background:var(--surface); color:var(--fg);
+          padding:2px 6px; cursor:pointer; border-radius:3px; flex-shrink:0;">
+          <option value="domain">Domain</option>
+          <option value="scale">Scale</option>
+          <option value="lifecycle">Lifecycle</option>
+          <option value="asset_type">Asset Type</option>
+          <option value="information_type">Info Type</option>
+          <option value="governance">Governance</option>
+          <option value="confidentiality">Confidentiality</option>
+        </select>
+        <div class="pill-group" id="all-filter-pills"></div>
+      </div>
+    </div>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="all">Files<span class="ct" id="all-ct">0</span></button>
+      <button class="tab" data-tab="priority">Priority<span class="ct" id="pr-ct">0</span></button>
+      <button class="tab" data-tab="review">Review<span class="ct" id="rq-ct">0</span></button>
+    </nav>
+
+    <!-- Tab: All Files -->
+    <div class="tab-panel active" data-tab-panel="all">
+      <div class="meta-row">
+        <span id="all-count-info"></span>
+        <button class="linkbtn" id="dl-all">↓ Export CSV</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data" id="all-table">
+          <thead>
+            <tr>
+              <th class="sortable" data-col="filename">File<em class="sort-arrow">↕</em></th>
+              <th>Summary</th>
+              <th class="sortable" data-col="domain">Domain<em class="sort-arrow">↕</em></th>
+              <th class="sortable" data-col="governance">Governance<em class="sort-arrow">↕</em></th>
+              <th class="sortable" data-col="confidentiality">Confidential<em class="sort-arrow">↕</em></th>
+              <th class="sortable" data-col="year">Year<em class="sort-arrow">↕</em></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div id="detail-panel"></div>
+    </div>
+
+    <!-- Tab: Priority — tiered reading list (authority › scope › coverage) -->
+    <div class="tab-panel" data-tab-panel="priority">
+      <div class="meta-row">
+        <span id="pr-count-info"></span>
+      </div>
+      <div id="priority-ledger"></div>
+    </div>
+
+    <!-- Tab: Review Queue -->
+    <div class="tab-panel" data-tab-panel="review">
+      <div class="rq-pagination">
+        <span id="rq-page-info" class="mono" style="font-size:11px; color:var(--muted);">—</span>
+        <div class="nav">
+          <button class="btn-ghost" id="rq-prev" disabled>← Prev</button>
+          <button class="btn-ghost" id="rq-next" disabled>Next →</button>
+          <button class="linkbtn" id="rq-download" style="margin-left:14px;">↓ Export queue</button>
+        </div>
+      </div>
+      <div id="rq-cards"></div>
+    </div>
+
+  </div><!-- /.bottom-area -->
+
+</div><!-- /.shell -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+/* ───────────────────────────────────────────────────────────
+   State
+   ─────────────────────────────────────────────────────────── */
+const state = {
+  data: [],                                 // all rows from /api/data
+  taxonomy: {},                             // from /api/taxonomy
+  reviewed: new Set(),                      // filenames already reviewed
+  edits: {},                                // {filename: {field: value}}
+  filters: {
+    struct: { dim: 'domain', values: new Set() },
+    all:    { dim: 'domain', values: new Set(), q: '' },
+  },
+  sort: { col: null, dir: 'asc' },
+  rqPage: 0,
+  rqPerPage: 10,
+  activeTab: 'all',
+  selectedStructure: null,                  // currently selected filename in Structure charts
+  selectedAll: null,                        // currently expanded filename in All Files
+  csv: null,
+  csvs: [],
+  quadrantColorMode: 'domain',              // 'domain' | 'score'
+  radarDim: 'domain',                       // active dimension for 05 radar
+  radarSelection: new Set(),                // selected category values for 05 radar
+  pendingScores: {},                        // {filename: deepAnalysis result} waiting for Mark reviewed
+};
+
+const PALETTE = [
+  '#E05C5C','#4A90D9','#3CB87A','#9966CC','#F5A623','#00B4A0','#E8765A','#5C8DD6',
+  '#D63B8F','#7AB648','#F0C040','#996699','#38AFCE','#E07040','#6699CC','#77AA55',
+];
+
+const PLOTLY_CFG = { responsive: true, displayModeBar: false };
+
+/* ───────────────────────────────────────────────────────────
+   Utils
+   ─────────────────────────────────────────────────────────── */
+const $  = (s, el = document) => el.querySelector(s);
+const rowKey = row => row.file_path || row.filename;
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+
+const api = (path) =>
+  fetch(path).then(r => r.json()).catch(e => ({error: String(e)}));
+
+const apiPost = (path, body) =>
+  fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body ?? {}),
+  }).then(r => r.json()).catch(e => ({error: String(e)}));
+
+function toNum(v) {
+  if (v === null || v === undefined || v === '') return NaN;
+  const n = Number(v);
+  return isNaN(n) ? NaN : n;
+}
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function hashString(s) {
+  let hash = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    hash ^= s.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+const _JITTER_SALT = {
+  'x':          'HORIZ_JITTER_A7F3__',
+  'y':          'VERT_JITTER_B2E9_INDEPENDENT__',
+  'x-selected': 'HORIZ_SEL_C1D4__',
+  'y-selected': 'VERT_SEL_D8A5_DECORR__',
+  'pending-x':  'PEND_HORIZ_E6B2__',
+  'pending-y':  'PEND_VERT_F3C7_DECORR__',
+};
+function stableJitter(key, axis, a, b) {
+  const salt = _JITTER_SALT[axis] || ('SALT_' + axis + '_ZZ__');
+  const hash = hashString(salt + key);
+  const t = hash / 4294967295;
+  return a + t * (b - a);
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+  ));
+}
+function wrapText(text, w = 42) {
+  if (!text) return '';
+  const words = String(text).split(/\s+/);
+  const lines = [];
+  let cur = '';
+  for (const wd of words) {
+    const t = cur ? cur + ' ' + wd : wd;
+    if (t.length > w) { if (cur) lines.push(cur); cur = wd; }
+    else              { cur = t; }
+  }
+  if (cur) lines.push(cur);
+  return lines.join('<br>');
+}
+function fmt(v, dash = '—') {
+  return (v === null || v === undefined || v === '' || v === 'Unknown' || v === 'None')
+    ? dash : String(v);
+}
+function nowToast(msg, err = false) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.toggle('err', !!err);
+  t.classList.add('show');
+  clearTimeout(nowToast._t);
+  nowToast._t = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+/* ───────────────────────────────────────────────────────────
+   Boot
+   ─────────────────────────────────────────────────────────── */
+async function boot() {
+  const csvList = await api('/api/csv-list');
+  state.csvs = csvList.csvs || [];
+
+  // If URL has ?csv=<path>, use that; otherwise default to most recent
+  const urlCsv = new URLSearchParams(window.location.search).get('csv');
+  state.csv = (urlCsv && state.csvs.includes(urlCsv))
+    ? urlCsv
+    : (csvList.default || state.csvs[0] || null);
+
+  renderCsvPicker();
+  await reloadData();   // fetches data + taxonomy (sidecar) together
+}
+
+
+function renderCsvPicker() {
+  const sel = $('#csv-select');
+  sel.innerHTML = '';
+  for (const p of state.csvs) {
+    const o = document.createElement('option');
+    o.value = p;
+    o.textContent = p.split('/').pop();
+    o.title = p;
+    if (p === state.csv) o.selected = true;
+    sel.appendChild(o);
+  }
+  sel.onchange = () => {
+    const chosen = sel.value;
+    if (!chosen || chosen === state.csv) return;
+    // Open the selected CSV in a new tab; keep this page unchanged
+    window.open('/?csv=' + encodeURIComponent(chosen), '_blank');
+    sel.value = state.csv;   // reset picker to current page's CSV
+  };
+}
+
+async function reloadData() {
+  setMetaLine('loading…');
+  const csvParam = encodeURIComponent(state.csv || '');
+  const [d, tx, rev] = await Promise.all([
+    api('/api/data?csv=' + csvParam),
+    api('/api/taxonomy?csv=' + csvParam),
+    api('/api/reviewed?csv=' + csvParam),
+  ]);
+  if (d.error) {
+    setMetaLine(d.error);
+    nowToast(d.error, true);
+    return;
+  }
+  state.reviewed = new Set(rev.reviewed || []);
+  state.edits = rev.edits || {};
+  state.taxonomy = tx || {};
+  state.data     = d.rows || [];
+  state.plOpen   = null;   // re-open the strongest non-empty priority band for the new data
+  setMetaLine((state.csv||'').split('/').pop());
+  $('#meta-line').title = d.run?.model ? `${d.run.provider} / ${d.run.model}` : 'Historical run: connection not recorded';
+  renderAll();
+}
+
+function setMetaLine(txt) { $('#meta-line').textContent = txt; }
+
+function renderAll() {
+  renderKpis();
+  renderStructureFilters();
+  renderStructureCharts();
+  renderAllFiltersOptions();
+  renderAllTable();
+  renderPriorityLedger();
+  renderReviewQueue();
+  updateTabCounts();
+}
+
+/* ───────────────────────────────────────────────────────────
+   KPI
+   ─────────────────────────────────────────────────────────── */
+function renderKpis() {
+  const total = state.data.length;
+  const needReview = state.data.filter(r =>
+    ['Critical','High','Medium'].includes(r.review_priority) &&
+    !state.reviewed.has(rowKey(r))).length;
+  const conf = state.data.filter(r => r.confidentiality === 'Confidential').length;
+  const auto = Math.max(total - needReview, 0);
+
+  $('#k-total').textContent = total;
+  $('#k-review').textContent = needReview;
+  $('#k-conf').textContent = conf;
+  $('#k-auto').textContent = auto;
+}
+
+/* ───────────────────────────────────────────────────────────
+   Structure (filters + charts)
+   ─────────────────────────────────────────────────────────── */
+function getDataOnlyRows() {
+  // Same filter as dashboard.py: is_data_asset=Yes OR quantitative info_type OR Data in candidates
+  return state.data.filter(r => {
+    const isData = String(r.is_data_asset || '').trim() === 'Yes';
+    const it = String(r.information_type || '').toLowerCase();
+    const quant = /tabular|quantitative|survey|assessment/.test(it);
+    const cand = String(r.asset_type_candidates || '').toLowerCase();
+    const hasData = /\bdata\b/.test(cand);
+    return isData || quant || hasData;
+  });
+}
+
+const COMPACT_DOMAINS = {
+  'Administrative & Legal': 'Legal',
+  'Architecture & Buildings': 'Architecture',
+  'Civil & Infrastructure': 'Infrastructure',
+  'Environment & Climate': 'Environment',
+  'Landscape & Public Realm': 'Landscape',
+  'MEP - HVAC': 'MEP',
+  'Mobility & Transport': 'Transport',
+  'Project Management': 'Management',
+  'QS & Commercial': 'Cost',
+  'Reference & Research': 'Research',
+  'Structural Engineering': 'Structure',
+};
+
+function renderPills(sel, values, activeSet, onChange, disabledSet = new Set(), colorMap = null) {
+  const el = $(sel); if (!el) return;
+  el.innerHTML = '';
+  if (!values.length) {
+    el.innerHTML = '<span class="label" style="color:var(--muted-2)">— none —</span>';
+    return;
+  }
+  for (const v of values) {
+    const p = document.createElement('button');
+    const isDisabled = disabledSet.has(v);
+    const label = sel === '#struct-filter-pills' ? (COMPACT_DOMAINS[v] || v) : v;
+    p.title = v;
+    p.setAttribute('aria-label', v);
+    p.className = 'pill' + (activeSet.has(v) ? ' active' : '') + (isDisabled ? ' disabled' : '');
+    if (colorMap && colorMap[v]) {
+      const dot = document.createElement('span');
+      dot.style.cssText = `width:8px;height:8px;border-radius:50%;background:${colorMap[v]};` +
+        `display:inline-block;flex-shrink:0;border:1.5px solid rgba(255,255,255,0.7);` +
+        `margin-right:5px;vertical-align:middle;position:relative;top:-1px;`;
+      p.appendChild(dot);
+      p.appendChild(document.createTextNode(label));
+    } else {
+      p.textContent = label;
+    }
+    if (isDisabled) {
+      p.disabled = true;
+    } else {
+      p.onclick = () => {
+        if (activeSet.has(v)) activeSet.delete(v); else activeSet.add(v);
+        p.classList.toggle('active');
+        onChange();
+      };
+    }
+    el.appendChild(p);
+  }
+  if (activeSet.size > 0) {
+    const clr = document.createElement('button');
+    clr.className = 'pill-clear';
+    clr.textContent = 'clear';
+    clr.onclick = () => { activeSet.clear(); onChange(); renderAll(); };
+    el.appendChild(clr);
+  }
+}
+
+function getScoredRows() {
+  return state.data.filter(r => gScore(r) > 0);
+}
+
+function renderStructureFilters() {
+  const dim    = state.filters.struct.dim;
+  const scored = getScoredRows();
+  const availVals = new Set(scored.map(r => getFilterVal(r, dim)).filter(Boolean));
+  const allVals   = filterDimVals(dim);
+  const disabled  = new Set(allVals.filter(v => !availVals.has(v)));
+  const colorMap  = {};
+  allVals.forEach((v, i) => colorMap[v] = PALETTE[i % PALETTE.length]);
+  renderPills('#struct-filter-pills', allVals, state.filters.struct.values, renderStructureCharts, disabled, colorMap);
+}
+
+function filteredStructurePool() {
+  const { dim, values } = state.filters.struct;
+  return getScoredRows().filter(r => !values.size || values.has(getFilterVal(r, dim)));
+}
+
+function renderStructureCharts() {
+  renderStructureFilters();
+
+  const pool = filteredStructurePool();
+  if (state.selectedStructure && !pool.some(r => r.filename === state.selectedStructure)) {
+    state.selectedStructure = null;
+  }
+  const selectedRow = state.selectedStructure
+    ? pool.find(r => r.filename === state.selectedStructure) || null
+    : null;
+  // struct-count element removed (count shown in filter pills)
+  plotQuadrant('chart-quadrant', pool, null);
+
+}
+
+/* L3 rubric levels (weakest → strongest) — mirrors core/layer3.py LEVELS */
+const L3_LEVELS = {
+  authority:     ['Background', 'Advisory', 'Client Brief', 'Hard Constraint', 'Statutory'],
+  scope:         ['Single Detail', 'Subsystem', 'Single Discipline', 'Multi-Discipline', 'Whole Project'],
+  coverage:      ['Stub', 'Fragmentary', 'Partial', 'Mostly Complete', 'Complete'],
+  urgency:       ['Off-Phase', 'Marginal', 'Relevant', 'Pivotal'],
+  accessibility: ['Raw Data', 'Specialist Only', 'Expert Extractable', 'Stated Conclusions', 'Direct Use'],
+};
+function lvlIdx(dim, v) {   /* 1-based ordinal within its dimension; 0 = unknown/unranked */
+  const i = (L3_LEVELS[dim] || []).indexOf(String(v || '').trim());
+  return i >= 0 ? i + 1 : 0;
+}
+function lvlPos(dim, v) {   /* level centre mapped onto the legacy 0–10 chart axis */
+  const n = (L3_LEVELS[dim] || []).length || 1;
+  const i = lvlIdx(dim, v);
+  return i ? (i - 0.5) * (10 / n) : 0;
+}
+function gAuthority(r)     { return lvlPos('authority',     r.authority)     || 5; }
+function gUrgency(r)       { return lvlPos('urgency',       r.urgency)       || 5; }
+function gScope(r)         { return lvlPos('scope',         r.scope)         || 5; }
+function gCoverage(r)      { return lvlPos('coverage',      r.coverage)      || 5; }
+function gAccessibility(r) { return lvlPos('accessibility', r.accessibility) || 5; }
+/* Lexicographic priority key (authority > scope > coverage). 0 = not ranked.
+   Ordinal only — used for ordering, never displayed as a score. */
+function gScore(r) {
+  const a = lvlIdx('authority', r.authority);
+  if (!a) return 0;
+  return a * 100 + lvlIdx('scope', r.scope) * 10 + lvlIdx('coverage', r.coverage);
+}
+function gPriorityLabel(r) {
+  return gScore(r) ? `${r.authority} · ${r.scope} · ${r.coverage}` : '';
+}
+function gReason(r)        { return r.decision_priority_reason || ''; }
+
+function setQuadrantColor(mode) {
+  state.quadrantColorMode = mode;
+  $('#qc-domain').classList.toggle('active', mode === 'domain');
+  $('#qc-score').classList.toggle('active', mode === 'score');
+  renderStructureCharts();
+}
+
+/* ── Percentile rank helper: returns 0–100 for each row in pool ── */
+function computePercentileRanks(pool) {
+  const scored = pool.filter(r => gScore(r) > 0);
+  if (scored.length < 2) return new Map(scored.map(r => [r.filename, 50]));
+  const sorted = [...scored].sort((a, b) => gScore(a) - gScore(b));
+  const ranks = new Map();
+  sorted.forEach((r, i) => {
+    ranks.set(r.filename, Math.round((i / (sorted.length - 1)) * 100));
+  });
+  return ranks;
+}
+
+/* ── Plotly: Decision Priority quadrant ─── */
+function plotQuadrant(divId, pool, highlightFilename = null) {
+  const el = document.getElementById(divId);
+  if (!pool.length) {
+    el.innerHTML = '<div class="chart-empty">No ranked files.</div>';
+    return;
+  }
+  // ── Color by whatever filter dim is active ─────────────────────────────
+  const colorDim = ($('#struct-filter-dim') || {}).value || 'domain';
+  const getVal   = r => getFilterVal(r, colorDim) || 'Unknown';
+  // Use filterDimVals (full sorted list) so indices match the pill colorMap exactly.
+  const allVals  = filterDimVals(colorDim);
+  const colorMap = {};
+  allVals.forEach((v, i) => colorMap[v] = PALETTE[i % PALETTE.length]);
+
+  const scored   = pool.filter(r => gScore(r) > 0);
+  const unscored = pool.filter(r => !(gScore(r) > 0));
+  const domains  = allVals;
+
+  const traces = [];
+
+  if (state.quadrantColorMode === 'score' && scored.length) {
+    // ── Score-rank mode: single trace, RdYlGn colorscale ─────────────────
+    const pctMap = computePercentileRanks(pool);
+    const normal = scored.filter(r => r.filename !== highlightFilename);
+    const hl     = scored.filter(r => r.filename === highlightFilename);
+    if (normal.length) {
+      traces.push({
+        type: 'scatter', mode: 'markers', name: 'Priority rank',
+        x: normal.map(r => clamp(gScope(r)       + stableJitter(String(r.filename || ''), 'x', -0.65, 0.65), 0.4, 10.6)),
+        y: normal.map(r => clamp(gAuthority(r) + stableJitter(String(r.filename || ''), 'y', -0.65, 0.65), 0.4, 10.6)),
+        marker: {
+          size:       normal.map(r => clamp(gCoverage(r) * 0.7 + 5, 6, 12)),
+          color:      normal.map(r => pctMap.get(r.filename) ?? 50),
+          colorscale: 'RdYlGn',
+          cmin: 0, cmax: 100,
+          showscale: true,
+          colorbar: { thickness: 10, len: 0.6, title: { text: 'Rank %', font: { size: 10 } },
+                      tickfont: { size: 9 }, x: 1.01 },
+          opacity: 0.85,
+          line: { width: 0.8, color: 'white' },
+        },
+        customdata: normal.map(r => [
+          String(r.filename || ''),
+          pctMap.get(r.filename) ?? 50,
+          `${escHtml(gPriorityLabel(r))}`,
+        ]),
+        hovertemplate: '<b>%{customdata[0]}</b><br>Rank: top %{customdata[1]}%<br><span style="font-size:10px">%{customdata[2]}</span><extra></extra>',
+      });
+    }
+    if (hl.length) {
+      traces.push({
+        type: 'scatter', mode: 'markers', name: '▶ selected',
+        x: hl.map(r => clamp(gScope(r) + stableJitter(String(r.filename || ''), 'x-selected', -0.1, 0.1), 0.6, 10.4)),
+        y: hl.map(r => clamp(gAuthority(r) + stableJitter(String(r.filename || ''), 'y-selected', -0.1, 0.1), 0.6, 10.4)),
+        marker: { size: hl.map(r => clamp(gCoverage(r) * 0.7 + 10, 12, 17)),
+                  color: 'white', symbol: 'star', opacity: 1,
+                  line: { width: 2.5, color: '#0a0a0a' } },
+        customdata: hl.map(r => String(r.filename || '')),
+        hovertemplate: '<b>%{customdata}</b><extra>selected</extra>',
+      });
+    }
+  } else {
+    // ── Category mode: color by active filter dimension ──────────────────
+    for (const val of allVals) {
+      const g = scored.filter(r => getVal(r) === val);
+      if (!g.length) continue;
+      const normal = g.filter(r => r.filename !== highlightFilename);
+      const hl     = g.filter(r => r.filename === highlightFilename);
+
+      if (normal.length) {
+        traces.push({
+          type: 'scatter', mode: 'markers', name: val,
+          x: normal.map(r => clamp(gScope(r)   + stableJitter(String(r.filename || ''), 'x', -0.65, 0.65), 0.4, 10.6)),
+          y: normal.map(r => clamp(gAuthority(r) + stableJitter(String(r.filename || ''), 'y', -0.65, 0.65), 0.4, 10.6)),
+          marker: {
+            size:    normal.map(r => clamp(gCoverage(r) * 0.7 + 5, 6, 12)),
+            color:   colorMap[val],
+            opacity: 0.82,
+            line: { width: 0.8, color: 'white' },
+          },
+          customdata: normal.map(r => [
+            String(r.filename || ''),
+            wrapText(gReason(r), 42),
+            `Authority ${r.authority} · Scope ${r.scope} · Coverage ${r.coverage} · Urgency ${r.urgency} (diagnostic)`,
+          ]),
+          hovertemplate: '<b>%{customdata[0]}</b><extra>%{fullData.name}</extra>',
+        });
+      }
+      if (hl.length) {
+        traces.push({
+          type: 'scatter', mode: 'markers', name: '▶ selected',
+          x: hl.map(r => clamp(gScope(r)   + stableJitter(String(r.filename || ''), 'x-selected', -0.1, 0.1), 0.6, 10.4)),
+          y: hl.map(r => clamp(gAuthority(r) + stableJitter(String(r.filename || ''), 'y-selected', -0.1, 0.1), 0.6, 10.4)),
+          marker: {
+            size:   hl.map(r => clamp(gCoverage(r) * 0.7 + 10, 12, 17)),
+            color: 'white', symbol: 'star', opacity: 1,
+            line: { width: 2.5, color: colorMap[val] },
+          },
+          customdata: hl.map(r => [
+            String(r.filename || ''),
+            wrapText(gReason(r), 42),
+            `Authority ${r.authority} · Scope ${r.scope} · Coverage ${r.coverage} · Urgency ${r.urgency} (diagnostic)`,
+          ]),
+          hovertemplate: '<b>%{customdata[0]}</b><extra>selected</extra>',
+        });
+      }
+    }
+  }
+
+  if (unscored.length) {
+    const norm = unscored.filter(r => r.filename !== highlightFilename);
+    const hl   = unscored.filter(r => r.filename === highlightFilename);
+    if (norm.length) {
+      traces.push({
+        type: 'scatter', mode: 'markers', name: 'Not ranked',
+        x: norm.map(r => clamp(5.5 + stableJitter(String(r.filename || ''), 'pending-x', -0.6, 0.6), 0.6, 10.4)),
+        y: norm.map(r => clamp(5.5 + stableJitter(String(r.filename || ''), 'pending-y', -0.6, 0.6), 0.6, 10.4)),
+        marker: {
+          size: 7, color: 'rgba(0,0,0,0)', symbol: 'diamond',
+          line: { width: 1.5, color: 'rgba(160,170,190,0.7)' },
+        },
+        customdata: norm.map(r => String(r.filename || '').slice(0, 45)),
+        hovertemplate: '<b>%{customdata}</b><br><i>Not ranked (drawings, models and media are not graded)</i><extra>Not ranked</extra>',
+      });
+    }
+    if (hl.length) {
+      traces.push({
+        type: 'scatter', mode: 'markers', name: '▶ selected (pending)',
+        x: hl.map(() => 5.5), y: hl.map(() => 5.5),
+        marker: { size: 12, color: 'rgba(0,0,0,0)', symbol: 'diamond', line: { width: 2.5, color: '#0a0a0a' } },
+        customdata: hl.map(r => String(r.filename || '').slice(0, 45)),
+        hovertemplate: '<b>%{customdata}</b><br><i>Not ranked</i><extra>Selected</extra>',
+      });
+    }
+  }
+
+  const layout = {
+    xaxis: {
+      title: { text: 'Scope', font: { size: 11, color: '#737373' } },
+      range: [0.5, 10.5], tickvals: [1,5,9], ticktext: ['Detail', 'Discipline', 'Project'],
+      fixedrange: true,
+      gridcolor: 'rgba(200,205,215,0.2)', tickfont: { size: 9, color: '#737373' },
+    },
+    yaxis: {
+      title: { text: 'Authority', font: { size: 11, color: '#737373' } },
+      range: [0.5, 10.5], tickvals: [1,5,9], ticktext: ['Background', 'Brief', 'Statutory'],
+      fixedrange: true,
+      gridcolor: 'rgba(200,205,215,0.2)', tickfont: { size: 9, color: '#737373' },
+    },
+    annotations: [],
+    height: 520, margin: { l: 76, r: 20, t: 20, b: 55 },
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(255,255,255,0)',
+    font: { family: 'Inter, sans-serif', size: 11, color: '#0a0a0a' },
+    showlegend: false,
+    dragmode: false,
+    hoverlabel: { bgcolor: 'white', font: { family: 'Inter', size: 12 }, bordercolor: 'rgba(0,0,0,0.12)' },
+  };
+
+  Plotly.react(divId, traces, layout, PLOTLY_CFG);
+
+  // Remove previous listener before adding a new one — prevents handler
+  // accumulation when plotQuadrant() is called repeatedly on each click.
+  const quadEl = document.getElementById(divId);
+  quadEl.removeAllListeners('plotly_click');
+  quadEl.on('plotly_click', data => {
+    const pt  = data.points[0];
+    if (!pt || !pt.customdata) return;
+    const fname = String(pt.customdata[0] || '').trim();
+    const row   = state.data.find(r => r.filename === fname);
+    if (!row) return;
+
+    const nextSelected = (state.selectedStructure === fname) ? null : fname;
+    state.selectedStructure = nextSelected;
+    renderStructureCharts();
+
+    if (nextSelected) {
+      selectAllRow(row.filename);
+      document.getElementById('detail-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+}
+
+/* ── Plotly: Multi-group radar (one trace per domain/scale/lifecycle) ─── */
+const ALL_DIMS = [
+  { id: 'authority', key: r => gAuthority(r), label: 'Authority'   },
+  { id: 'scope',     key: r => gScope(r),     label: 'Scope' },
+  { id: 'urgency',   key: r => gUrgency(r),         label: 'Urgency'    },
+  { id: 'coverage',  key: r => gCoverage(r),        label: 'Coverage'             },
+  { id: 'accessibility', key: r => gAccessibility(r), label: 'Accessibility'          },
+];
+
+const FILTER_DIMS = [
+  { value: 'domain',           fn: r => r.domain },
+  { value: 'scale',            fn: r => r.scale },
+  { value: 'lifecycle',        fn: r => r.lifecycle_stage || r.lifecycle },
+  { value: 'asset_type',       fn: r => r.asset_type },
+  { value: 'information_type', fn: r => r.information_type },
+  { value: 'governance',       fn: r => r.governance },
+  { value: 'confidentiality',  fn: r => r.confidentiality },
+];
+
+function getFilterVal(r, dimVal) {
+  const d = FILTER_DIMS.find(x => x.value === dimVal);
+  return d ? ((d.fn(r) || '').trim()) : '';
+}
+
+function filterDimVals(dimVal) {
+  return [...new Set(state.data.map(r => getFilterVal(r, dimVal)).filter(Boolean))].sort();
+}
+
+function activeDim() {
+  return ALL_DIMS[0];
+}
+
+/* ── Plotly: Duo (selected file vs domain avg) ─────── */
+function plotDuo(divId, row, source) {
+  const fScope = gScope(row);
+  const fA  = gAuthority(row);
+  const fC  = gCoverage(row);
+
+  const domain = String(row.domain || 'Unknown').trim();
+  const dom = source.filter(r => r.domain === domain && gScore(r) > 0);
+
+  const avgFn = (arr, getter) => {
+    const v = arr.map(getter).filter(x => !isNaN(x) && x > 0);
+    return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 5;
+  };
+  const aScope = dom.length ? avgFn(dom, gScope)     : 5;
+  const aA   = dom.length ? avgFn(dom, gAuthority)   : 5;
+  const aC   = dom.length ? avgFn(dom, gCoverage)    : 5;
+  const nDom = dom.length;
+
+  const fname = String(row.filename || 'This file').slice(0, 40);
+  const avgLabel = nDom ? `${domain.slice(0,20)} avg (n=${nDom})` : 'No avg available';
+
+  const traces = [
+    {
+      type: 'scatter', mode: 'markers+text',
+      name: avgLabel, x: [aScope], y: [aA], text: [avgLabel], textposition: 'top center',
+      textfont: { size: 10, color: '#737373' },
+      marker: { size: Math.max(10, aC * 3 + 4), color: 'rgba(150,160,185,0.45)',
+                line: { width: 1.5, color: '#9ca3af' } },
+      hovertemplate: `<b>${escHtml(avgLabel)}</b><extra></extra>`,
+    },
+    {
+      type: 'scatter', mode: 'markers+text',
+      name: fname, x: [fScope], y: [fA], text: [fname], textposition: 'top center',
+      textfont: { size: 10, color: '#0a0a0a' },
+      marker: { size: Math.max(12, fC * 3 + 6), color: '#0a0a0a', opacity: 0.88,
+                line: { width: 2, color: 'white' } },
+      hovertemplate: `<b>${escHtml(fname)}</b><br>${escHtml(gPriorityLabel(row))}<br>${wrapText(gReason(row), 42)}<extra></extra>`,
+    },
+  ];
+  Plotly.react(divId, traces, {
+    xaxis: { title: { text: 'Scope', font: { size: 11, color: '#737373' } },
+             range: [0.5, 10.5], tickvals: [1,3,5,7,9], ticktext: L3_LEVELS.scope, gridcolor: 'rgba(200,205,215,0.35)',
+             tickfont: { size: 9, color: '#737373' } },
+    yaxis: { title: { text: 'Authority', font: { size: 11, color: '#737373' } },
+             range: [0.5, 10.5], tickvals: [1,3,5,7,9], ticktext: L3_LEVELS.authority, gridcolor: 'rgba(200,205,215,0.35)',
+             tickfont: { size: 9, color: '#737373' } },
+    annotations: [
+      { x:10.2, y:10.2, text:'Project-defining', showarrow:false, xanchor:'right', font:{ size:9, color:'rgba(120,130,150,0.5)' } },
+      { x:0.8,  y:10.2, text:'Local constraint', showarrow:false, xanchor:'left',  font:{ size:9, color:'rgba(120,130,150,0.5)' } },
+      { x:10.2, y:0.8,  text:'Broad context',    showarrow:false, xanchor:'right', font:{ size:9, color:'rgba(120,130,150,0.5)' } },
+      { x:0.8,  y:0.8,  text:'Background',        showarrow:false, xanchor:'left',  font:{ size:9, color:'rgba(120,130,150,0.5)' } },
+    ],
+    height: 420, showlegend: false, margin: { l: 60, r: 20, t: 20, b: 55 },
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(255,255,255,0)',
+    font: { family: 'Inter, sans-serif', size: 11, color: '#0a0a0a' },
+  }, PLOTLY_CFG);
+}
+
+/* ── Plotly: File-vs-domain radar (5 dims) ───────────── */
+function plotFileVsDomain(divId, row, source) {
+  const dims = [
+    [r => clamp(gAuthority(r),     0, 10), 'Authority'   ],
+    [r => clamp(gUrgency(r),       0, 10), 'Urgency'     ],
+    [r => clamp(gCoverage(r),      0, 10), 'Coverage'    ],
+    [r => clamp(gAccessibility(r), 0, 10), 'Accessibility'],
+    [r => clamp(gScope(r),         0, 10), 'Scope'       ],
+  ];
+  const fs = dims.map(([getter]) => getter(row));
+  const domain = String(row.domain || 'Unknown').trim();
+  const dom = source.filter(r => r.domain === domain);
+  const avgFn = (getter) => {
+    const v = dom.map(getter).filter(x => !isNaN(x) && x > 0);
+    return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 5;
+  };
+  const av = dom.length ? dims.map(([getter]) => avgFn(getter)) : [6,6,6,6,6];
+  const labels = dims.map(([, l]) => l);
+  // close polygons
+  const fsc = [...fs, fs[0]];
+  const avc = [...av, av[0]];
+  const lb  = [...labels, labels[0]];
+
+  Plotly.react(divId, [
+    {
+      type: 'scatterpolar', r: avc, theta: lb, fill: 'toself',
+      name: `${domain.slice(0,18)} avg`,
+      line: { color: 'rgba(110,125,165,0.65)', dash: 'dot', width: 1.5 },
+      fillcolor: 'rgba(110,125,165,0.10)', marker: { size: 5 },
+    },
+    {
+      type: 'scatterpolar', r: fsc, theta: lb, fill: 'toself',
+      name: 'This file',
+      line: { color: '#0a0a0a', width: 2 },
+      fillcolor: 'rgba(10,10,10,0.10)', marker: { size: 7, color: '#0a0a0a' },
+    },
+  ], {
+    title: { text: `vs. ${domain.slice(0,22)} avg`, font: { size: 12 }, x: 0.5, xanchor: 'center' },
+    polar: {
+      radialaxis: { visible: true, range: [0,10], tickmode: 'array', tickvals: [0,2,4,6,8,10], tickfont: { size: 8, color: '#737373' } },
+      angularaxis: { tickfont: { size: 10, color: '#0a0a0a' } },
+      bgcolor: 'rgba(0,0,0,0)',
+    },
+    showlegend: true,
+    legend: { font: { size: 10 }, x: 0.5, y: -0.05, orientation: 'h', xanchor: 'center' },
+    height: 420, margin: { l: 20, r: 20, t: 40, b: 30 },
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { family: 'Inter, sans-serif', size: 11, color: '#0a0a0a' },
+  }, PLOTLY_CFG);
+}
+
+/* ───────────────────────────────────────────────────────────
+   All Files tab
+   ─────────────────────────────────────────────────────────── */
+function allFilesPool() {
+  // "Low" priority + already-reviewed files — same as dashboard.py's All Files tab
+  return state.data.filter(r =>
+    r.review_priority === 'Low' || state.reviewed.has(rowKey(r))
+  );
+}
+
+function renderAllFiltersOptions() {
+  const dim = state.filters.all.dim;
+  renderPills('#all-filter-pills', filterDimVals(dim), state.filters.all.values, renderAllTable);
+}
+
+function applyAllFilters(rows) {
+  const f = state.filters.all;
+  const q = (f.q || '').trim().toLowerCase();
+  return rows.filter(r => {
+    if (f.values.size && !f.values.has(getFilterVal(r, f.dim))) return false;
+    if (q) {
+      const hay = [r.short_summary, r.filename, r.keywords, r.folder, r.domain]
+        .map(x => String(x || '').toLowerCase()).join(' ');
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function sortByRelevance(rows) {
+  const vMap = { High: 0, Medium: 1, Low: 2 };
+  return [...rows].sort((a, b) => {
+    const va = vMap[a.info_value_hint] ?? 9;
+    const vb = vMap[b.info_value_hint] ?? 9;
+    if (va !== vb) return va - vb;
+    return (toNum(b.certainty_score) || 0) - (toNum(a.certainty_score) || 0);
+  });
+}
+
+function applySortToPool(pool) {
+  const { col, dir } = state.sort;
+  if (!col) return sortByRelevance(pool);
+  const mult = dir === 'asc' ? 1 : -1;
+  return [...pool].sort((a, b) => {
+    let va = String(a[col] || '').toLowerCase();
+    let vb = String(b[col] || '').toLowerCase();
+    // numeric columns
+    if (col === 'year' || col === 'certainty_score') {
+      va = parseFloat(a[col]) || 0;
+      vb = parseFloat(b[col]) || 0;
+      return mult * (va - vb);
+    }
+    // L3 rubric columns sort by level order, not alphabetically
+    if (L3_LEVELS[col]) {
+      return mult * (lvlIdx(col, a[col]) - lvlIdx(col, b[col]));
+    }
+    return mult * va.localeCompare(vb);
+  });
+}
+
+function updateSortHeaders() {
+  $$('#all-table thead th.sortable').forEach(th => {
+    const col = th.dataset.col;
+    const arrow = th.querySelector('.sort-arrow');
+    if (col === state.sort.col) {
+      th.classList.add('sort-active');
+      arrow.textContent = state.sort.dir === 'asc' ? '↑' : '↓';
+    } else {
+      th.classList.remove('sort-active');
+      arrow.textContent = '↕';
+    }
+  });
+}
+
+function renderAllTable() {
+  const filtered = applyAllFilters(allFilesPool());
+  const pool = applySortToPool(filtered);
+  const tbody = $('#all-table tbody');
+  tbody.innerHTML = '';
+  if (!pool.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="state-empty">No matching files.</td></tr>`;
+  } else {
+    pool.forEach((r, idx) => {
+      const tr = document.createElement('tr');
+      tr.dataset.filename = r.filename;
+      tr.dataset.idx = idx;
+      if (r.filename === state.selectedAll) tr.classList.add('selected');
+      const confIcon = r.confidentiality === 'Confidential' ? '🔒 ' : '';
+      tr.innerHTML = `
+        <td><div class="cell-fn">${escHtml(r.filename)}</div></td>
+        <td><div class="cell-sum">${escHtml(String(r.short_summary || '').slice(0, 90))}${String(r.short_summary || '').length > 90 ? '…' : ''}</div></td>
+        <td>${escHtml(fmt(r.domain))}</td>
+        <td>${escHtml(fmt(r.governance))}</td>
+        <td>${confIcon}${escHtml(fmt(r.confidentiality, ''))}</td>
+        <td class="mono">${escHtml(fmt(r.year, ''))}</td>
+      `;
+      tr.onclick = () => { selectAllRow(r.filename); };
+      tbody.appendChild(tr);
+    });
+  }
+  $('#all-count-info').textContent = `${pool.length} files`;
+  $('#all-ct').textContent = pool.length;
+  updateSortHeaders();
+
+  // Rebuild detail if the selected row survived the filter
+  if (state.selectedAll && !pool.some(r => r.filename === state.selectedAll)) {
+    state.selectedAll = null;
+    $('#detail-panel').innerHTML = '';
+  } else if (state.selectedAll) {
+    renderFileDetail(state.selectedAll);
+  }
+}
+
+function selectAllRow(fname) {
+  state.selectedAll = (state.selectedAll === fname) ? null : fname;
+  $$('#all-table tbody tr').forEach(tr =>
+    tr.classList.toggle('selected', tr.dataset.filename === state.selectedAll)
+  );
+  if (state.selectedAll) renderFileDetail(state.selectedAll);
+  else                   $('#detail-panel').innerHTML = '';
+}
+
+async function renderFileDetail(fname) {
+  const row = state.data.find(r => r.filename === fname);
+  if (!row) return;
+  const panel = $('#detail-panel');
+  panel.innerHTML = `
+    <div class="detail-panel">
+      <div class="detail-hd">
+        <h2>${escHtml(fname)}</h2>
+        <div class="actions">
+          <button class="btn-ghost" data-action="open">${_openLabel}</button>
+          <button class="btn-ghost" data-action="reveal">${_revealLabel}</button>
+        </div>
+      </div>
+      <div class="detail-body">
+        <div class="preview-box" id="detail-preview"><div class="state-empty">loading preview…</div></div>
+        <div class="meta-grid" id="detail-meta"></div>
+      </div>
+    </div>
+  `;
+  panel.querySelector('[data-action="open"]').onclick   = () => openFile(row.file_path, 'file');
+  panel.querySelector('[data-action="reveal"]').onclick = () => openFile(row.file_path, 'reveal');
+
+  // Metadata grid
+  const mg = $('#detail-meta');
+  const rowItem = (k, v, dim = false) => {
+    if (v === '' || v === null || v === undefined || v === 'Unknown' || v === 'None') return '';
+    return `<div class="k">${escHtml(k)}</div>
+            <div class="v${dim ? ' dim' : ''}">${escHtml(v)}</div>`;
+  };
+  const e = escHtml;
+  let mgHtml = '';
+
+  // Summary + keywords
+  if (row.short_summary) mgHtml += `<div class="summary-block">${e(row.short_summary)}</div>`;
+  if (row.keywords)      mgHtml += `<div class="kw-block">${e(row.keywords)}</div>`;
+
+  // Classification
+  mgHtml += rowItem('Folder',             row.folder);
+  mgHtml += rowItem('Domain',             row.domain);
+  mgHtml += rowItem('Domain Candidates',  row.domain_candidates, true);
+  mgHtml += rowItem('Asset Type',         row.asset_type);
+  mgHtml += rowItem('Asset Candidates',   row.asset_type_candidates, true);
+  mgHtml += rowItem('Lifecycle',          row.lifecycle_stage || row.lifecycle);
+  mgHtml += rowItem('Scale',              row.scale);
+  mgHtml += rowItem('Info Type',          row.information_type);
+  mgHtml += rowItem('Governance',         row.governance);
+
+  // Confidentiality + reason
+  if (row.confidentiality) {
+    const confRsn = row.confidentiality_reason ? ` — ${row.confidentiality_reason}` : '';
+    mgHtml += rowItem('Confidentiality', row.confidentiality + confRsn);
+  }
+
+  // Year + confidence
+  if (row.year) {
+    const yrConf = row.year_confidence ? ` (${row.year_confidence} confidence)` : '';
+    mgHtml += rowItem('Year', String(row.year) + yrConf);
+  }
+
+  // Age warning — highlighted
+  if (row.age_warning) {
+    mgHtml += `<div class="review-flag"><b>Age:</b> ${e(row.age_warning)}</div>`;
+  }
+
+  mgHtml += rowItem('Size',        row.size_kb ? `${row.size_kb} KB` : '');
+
+  mgHtml += rowItem('Extraction', row.extraction_coverage, true);
+
+  // Review assessment (always show)
+  const prio = row.review_priority || '';
+  if (prio) {
+    const cls = (prio === 'Critical' || prio === 'High') ? 'high' : '';
+    const reasons = row.review_reasons ? ` · ${row.review_reasons}` : '';
+    const action  = row.action ? `<div style="margin-top:4px; color:var(--fg-2)">${e(row.action)}</div>` : '';
+    mgHtml += `<div class="review-flag ${cls}">
+      <b>${e(prio)} priority</b>${e(reasons)}${action}
+    </div>`;
+  }
+
+  mg.innerHTML = mgHtml;
+
+  // Preview
+  loadPreviewInto('#detail-preview', row.file_path, row.content_sample);
+
+
+}
+
+async function loadPreviewInto(sel, filePath, fallbackText = '') {
+  const el = $(sel);
+  if (!filePath) {
+    el.innerHTML = fallbackText
+      ? `<pre>${escHtml(String(fallbackText).slice(0, 1800))}</pre>`
+      : `<div class="state-empty">No preview available.</div>`;
+    return;
+  }
+  const res = await api('/api/preview?path=' + encodeURIComponent(filePath));
+  if (res.kind === 'image') {
+    el.innerHTML = `<img src="${res.data}" alt="">`;
+  } else if (res.kind === 'text') {
+    el.innerHTML = `<pre>${escHtml(res.data)}</pre>`;
+  } else if (res.kind === 'table') {
+    let h = '<table class="preview-table"><thead><tr>';
+    for (const c of res.columns) h += `<th>${escHtml(c)}</th>`;
+    h += '</tr></thead><tbody>';
+    for (const r of res.rows) {
+      h += '<tr>' + r.map(v => `<td>${escHtml(v)}</td>`).join('') + '</tr>';
+    }
+    h += '</tbody></table>';
+    el.innerHTML = h;
+  } else if (fallbackText) {
+    el.innerHTML = `<pre>${escHtml(String(fallbackText).slice(0, 1800))}</pre>`;
+  } else {
+    el.innerHTML = `<div class="state-empty">No preview.</div>`;
+  }
+}
+
+const _isMac = /mac/i.test(navigator.platform);
+const _openLabel   = _isMac ? 'Open in Finder'   : 'Open in Explorer';
+const _revealLabel = _isMac ? 'Reveal in Finder'  : 'Show in Explorer';
+
+async function openFile(path, mode = 'file') {
+  if (!path) return nowToast('no file path', true);
+  const r = await apiPost('/api/open-file', { path, mode });
+  if (r.error) nowToast(r.error, true);
+  else         nowToast(mode === 'reveal' ? _revealLabel : _openLabel + '…');
+}
+
+/* ───────────────────────────────────────────────────────────
+   Review Queue tab
+   ─────────────────────────────────────────────────────────── */
+function reviewPool() {
+  return state.data.filter(r =>
+    ['Critical','High','Medium'].includes(r.review_priority)
+    && !state.reviewed.has(rowKey(r))
+  );
+}
+
+function sortByPriority(rows) {
+  const m = { Critical: 0, Urgent: 0, High: 1, Medium: 2, Low: 3 };
+  return [...rows].sort((a, b) =>
+    (m[a.review_priority] ?? 9) - (m[b.review_priority] ?? 9)
+  );
+}
+
+function renderReviewQueue() {
+  const pool = sortByPriority(reviewPool());
+  const cards = $('#rq-cards');
+  if (!pool.length) {
+    cards.innerHTML = `<div class="state-banner">No review needed.</div>`;
+    $('#rq-page-info').textContent = '0 of 0';
+    $('#rq-prev').disabled = true;
+    $('#rq-next').disabled = true;
+    $('#rq-ct').textContent = 0;
+    return;
+  }
+  const total = pool.length;
+  const totalPages = Math.max(1, Math.ceil(total / state.rqPerPage));
+  state.rqPage = clamp(state.rqPage, 0, totalPages - 1);
+  const start = state.rqPage * state.rqPerPage;
+  const end   = Math.min(start + state.rqPerPage, total);
+
+  $('#rq-page-info').textContent =
+    `page ${state.rqPage + 1}/${totalPages} · files ${start + 1}-${end} of ${total}`;
+  $('#rq-prev').disabled = state.rqPage <= 0;
+  $('#rq-next').disabled = state.rqPage >= totalPages - 1;
+  $('#rq-ct').textContent = total;
+
+  cards.innerHTML = '';
+  pool.slice(start, end).forEach((row, i) => {
+    const idx = start + i;
+    cards.appendChild(renderRqCard(row, idx));
+    // Fetch preview asynchronously so large queues don't block
+    loadPreviewInto(`#rq-preview-${idx}`, row.file_path, row.content_sample);
+  });
+}
+
+function renderRqCard(row, idx) {
+  const fname = row.filename || `file_${idx}`;
+  const prio  = row.review_priority || 'Medium';
+  const card = document.createElement('div');
+  card.className = 'rq-card';
+  card.dataset.filename = fname;
+
+  const prioCls = prio.toLowerCase();
+
+  card.innerHTML = `
+    <div class="rq-hd">
+      <h3>${escHtml(fname)}</h3>
+      <span class="prio ${prioCls}">${escHtml(prio)}</span>
+      <div class="actions">
+        <button class="btn-ghost"   data-act="open">↗ ${_openLabel}</button>
+        <button class="btn-ghost"   data-act="deep">Analyse</button>
+        <button class="btn-primary" data-act="save">Mark reviewed</button>
+      </div>
+    </div>
+
+    <div class="rq-summaries">
+      <div class="block">
+        <span class="label">Why flagged</span>
+        <div class="rq-reason">${escHtml(row.review_reasons || '(no reason recorded)')}</div>
+      </div>
+      <div class="block">
+        <span class="label">Summary</span>
+        <textarea class="rq-summary-edit" data-field="short_summary">${escHtml(row.short_summary || '')}</textarea>
+      </div>
+    </div>
+
+    <div class="rq-body">
+      <div class="rq-preview" id="rq-preview-${idx}"><div class="state-empty">loading…</div></div>
+      <div class="rq-edits">
+        ${dropdownField('Domain',      'domain',           row.domain,           domainOptions())}
+        ${dropdownField('Asset Type',  'asset_type',       row.asset_type,       assetOptions())}
+        ${dropdownField('Lifecycle',   'lifecycle',        row.lifecycle,        lifecycleOptions())}
+        ${dropdownField('Governance',  'governance',       row.governance,       governanceOptions())}
+        ${dropdownField('Scale',       'scale',            row.scale,            scaleOptions())}
+        ${dropdownField('Info Type',   'information_type', row.information_type, infoTypeOptions())}
+        ${dropdownField('Confidential', 'confidentiality', row.confidentiality || 'Not Confidential', ['Confidential','Not Confidential'], 'full')}
+      </div>
+    </div>
+
+    <div class="da-panel" id="da-panel-${idx}">
+      
+    </div>
+  `;
+
+  card.querySelector('[data-act="open"]').onclick  = () => openFile(row.file_path, 'folder');
+  card.querySelector('[data-act="save"]').onclick  = () => saveReview(rowKey(row), card);
+  card.querySelector('[data-act="deep"]').onclick  = () => deepAnalyse(row, idx);
+
+  return card;
+}
+
+function dropdownField(label, field, current, options, full = '') {
+  const set = new Set(options);
+  if (current && !set.has(current)) options = [current, ...options];
+  const opts = options.map(o =>
+    `<option value="${escHtml(o)}"${o === current ? ' selected' : ''}>${escHtml(o)}</option>`
+  ).join('');
+  return `
+    <div class="field${full ? ' ' + full : ''}">
+      <span class="label">${escHtml(label)}</span>
+      <select data-field="${field}">${opts}</select>
+    </div>
+  `;
+}
+
+function taxonomyNames(key) {
+  const arr = state.taxonomy[key] || [];
+  return [...new Set(arr.map(x => String(x.name || '').trim()).filter(Boolean))].sort();
+}
+// Taxonomy-based options — used by edit dropdowns (valid classification options)
+function domainOptions()     { return taxonomyNames('domains'); }
+function scaleOptions()      { return taxonomyNames('scales'); }
+function lifecycleOptions()  { return taxonomyNames('lifecycle_stages'); }
+function assetOptions()      { return taxonomyNames('asset_types'); }
+function infoTypeOptions()   { return taxonomyNames('information_types'); }
+function governanceOptions() { return taxonomyNames('governance_sources'); }
+
+// Data-derived options — used by filter pills (shows what's actually in this CSV)
+function dataVals(field) {
+  return [...new Set(state.data.map(r => (r[field] || '').trim()).filter(Boolean))].sort();
+}
+
+async function saveReview(fname, cardEl) {
+  const edits = {};
+  cardEl.querySelectorAll('[data-field]').forEach(el => {
+    edits[el.dataset.field] = el.value;
+  });
+
+  // Merge any pending deep analysis scores into edits
+  const pending = state.pendingScores[fname];
+  if (pending) {
+    const scoreFields = ['authority','scope','urgency','coverage','accessibility',
+      'authority_reason','scope_reason','urgency_reason','coverage_reason','accessibility_reason',
+      'decision_priority_reason'];
+    scoreFields.forEach(k => { if (pending[k] != null) edits[k] = pending[k]; });
+    // Also patch session data so charts update immediately
+    const target = state.data.find(r => rowKey(r) === fname);
+    if (target) scoreFields.forEach(k => { if (pending[k] != null) target[k] = pending[k]; });
+    delete state.pendingScores[fname];
+  }
+
+  const r = await apiPost('/api/review', { csv: state.csv, file_path: fname, edits });
+  if (r.error) return nowToast(r.error, true);
+  state.reviewed.add(fname);
+  state.edits[fname] = edits;
+  const editedRow = state.data.find(r => rowKey(r) === fname);
+  if (editedRow) Object.assign(editedRow, edits);
+  nowToast(`✓ Saved · ${fname.slice(0, 32)}`);
+  renderReviewQueue();
+  renderKpis();
+  updateTabCounts();
+  renderAllTable();
+  renderAllFiltersOptions();
+  renderStructureCharts();
+  renderPriorityLedger();
+}
+
+/* ───────────────────────────────────────────────────────────
+   Deep Analyse (Layer 3 Agent)
+   ─────────────────────────────────────────────────────────── */
+async function deepAnalyse(row, idx) {
+  const panel = $(`#da-panel-${idx}`);
+  if (!panel) return;
+
+  panel.classList.add('open');
+  panel.innerHTML = `<div class="da-status">Analysing…</div>`;
+
+  try {
+    const res = await apiPost('/api/deep-analysis', {
+      csv: state.csv,
+      row: row,
+    });
+
+    if (res.error) {
+      panel.innerHTML = `<div class="da-status err">Error: ${escHtml(res.error)}</div>`;
+      return;
+    }
+
+    const priorityLabel = gPriorityLabel(res) || '—';
+    const dims = [
+      { key: 'authority',     label: 'Authority'   },
+      { key: 'scope',         label: 'Scope' },
+      { key: 'urgency',       label: 'Urgency'     },
+      { key: 'coverage',      label: 'Coverage'              },
+      { key: 'accessibility', label: 'Accessibility'             },
+    ];
+
+    const dimHtml = dims.map(d => `
+      <div class="da-dim">
+        <span class="dim-name">${d.label}</span>
+        <span class="dim-val">${res[d.key] ?? '—'}</span>
+        <span class="dim-reason">${escHtml(res[d.key + '_reason'] || '')}</span>
+      </div>
+    `).join('');
+
+    const evidence = (res.agent_evidence || []).map(e =>
+      `  ${escHtml(e.tool)}(${escHtml(JSON.stringify(e.args))}) → ${escHtml(e.result_summary)}`
+    ).join('\n');
+
+    // Store result so Mark reviewed can pick it up automatically
+    state.pendingScores[rowKey(row)] = res;
+
+    panel.innerHTML = `
+      <div class="da-status">✓ Agent complete · ${(res.agent_evidence||[]).length} tool call(s)</div>
+      ${evidence ? `<pre class="da-evidence">${evidence}</pre>` : ''}
+      <div class="da-scores">${dimHtml}</div>
+      <div class="da-score-row">
+        <span class="da-total" style="font-size:13px;">${escHtml(priorityLabel)}</span>
+        <span class="da-reason">${escHtml(res.decision_priority_reason || '')}</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:10px;">Grades will be applied automatically when you click Reviewed.</div>
+    `;
+
+  } catch (err) {
+    panel.innerHTML = `<div class="da-status err">Network error: ${escHtml(String(err))}</div>`;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────
+   Tab wiring
+   ─────────────────────────────────────────────────────────── */
+function updateTabCounts() {
+  $('#all-ct').textContent = applyAllFilters(allFilesPool()).length;
+  $('#rq-ct').textContent  = reviewPool().length;
+  const prEl = $('#pr-ct');
+  if (prEl) prEl.textContent = state.data.filter(r => gScore(r) > 0).length;
+}
+
+function wireTabs() {
+  $$('.tab').forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.dataset.tab;
+      state.activeTab = id;
+      $$('.tab').forEach(b => b.classList.toggle('active', b === btn));
+      $$('.tab-panel').forEach(p =>
+        p.classList.toggle('active', p.dataset.tabPanel === id));
+    };
+  });
+}
+
+/* ───────────────────────────────────────────────────────────
+   Wire top controls + download
+   ─────────────────────────────────────────────────────────── */
+function wireTopControls() {
+  $('#btn-refresh').onclick = reloadData;
+
+  // ── Sync panel ──────────────────────────────────────────────────────────
+  const _syncPanel   = $('#sync-panel');
+  const _syncRunBtn  = $('#sync-run-btn');
+  const _syncProgWrap= $('#sync-prog-wrap');
+  const _syncProgBar = $('#sync-prog-bar');
+  const _syncLog     = $('#sync-log');
+  const _syncStatus  = $('#sync-status');
+  let   _syncRunning = false;
+
+  async function _syncFetchDiff() {
+    $('#sync-root').textContent = '…';
+    $('#sync-processed').textContent = '…';
+    $('#sync-new').textContent = '…';
+    _syncStatus.textContent = '';
+    _syncRunBtn.style.display = 'none';
+    try {
+      const res = await fetch(`/api/incremental-diff?csv=${encodeURIComponent(state.csv)}`);
+      const d   = await res.json();
+      if (d.error) { _syncStatus.textContent = d.error; return; }
+      const parts = (d.source_root || '').split('/');
+      $('#sync-root').textContent = parts.slice(-2).join('/') || d.source_root;
+      $('#sync-processed').textContent = (d.processed || 0).toLocaleString();
+      $('#sync-new').textContent = (d.new_count || 0).toLocaleString();
+      if (d.new_count > 0) {
+        _syncRunBtn.style.display = '';
+        _syncStatus.textContent = '';
+      } else {
+        _syncStatus.textContent = '✓ up to date';
+      }
+    } catch(e) {
+      _syncStatus.textContent = 'fetch failed';
+    }
+  }
+
+  $('#btn-sync').addEventListener('click', async () => {
+    if (_syncRunning) return;
+    const isOpen = _syncPanel.classList.contains('open');
+    if (isOpen) { _syncPanel.classList.remove('open'); return; }
+    _syncPanel.classList.add('open');
+    _syncProgWrap.style.display = 'none';
+    _syncLog.textContent = '';
+    await _syncFetchDiff();
+  });
+
+  _syncRunBtn.addEventListener('click', () => {
+    if (_syncRunning) return;
+    _syncRunning = true;
+    _syncRunBtn.style.display = 'none';
+    _syncProgWrap.style.display = 'block';
+    _syncProgBar.style.width = '0%';
+    _syncLog.textContent = 'Starting…';
+
+    fetch('/api/run-incremental', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ csv: state.csv, workers: 3 }),
+    }).then(resp => {
+      const reader  = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let   buf     = '';
+
+      function read() {
+        reader.read().then(({ done, value }) => {
+          if (done) { _syncRunning = false; reloadData(); return; }
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split('\n');
+          buf = lines.pop();
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+              const ev = JSON.parse(line.slice(6));
+              if (ev.type === 'progress') {
+                const pct = Math.round(ev.i / ev.total * 100);
+                _syncProgBar.style.width = pct + '%';
+                _syncLog.textContent = `[${ev.i}/${ev.total}] ${ev.file}`;
+              } else if (ev.type === 'done') {
+                _syncProgBar.style.width = '100%';
+                _syncLog.textContent = `✓ ${ev.added} file${ev.added !== 1 ? 's' : ''} added`;
+                _syncRunning = false;
+                setTimeout(() => { _syncPanel.classList.remove('open'); reloadData(); }, 1800);
+              } else if (ev.type === 'error') {
+                _syncLog.textContent = `Error: ${ev.message}`;
+                _syncRunning = false;
+              }
+            } catch {}
+          }
+          read();
+        });
+      }
+      read();
+    }).catch(e => {
+      _syncLog.textContent = `Error: ${e.message}`;
+      _syncRunning = false;
+    });
+  });
+
+  $('#struct-filter-dim').addEventListener('change', e => {
+    state.filters.struct.dim    = e.target.value;
+    state.filters.struct.values = new Set();
+    renderStructureCharts();
+  });
+
+  $('#all-filter-dim').addEventListener('change', e => {
+    state.filters.all.dim    = e.target.value;
+    state.filters.all.values = new Set();
+    renderAllFiltersOptions();
+    renderAllTable();
+  });
+
+  $('#all-search').addEventListener('input', (e) => {
+    state.filters.all.q = e.target.value;
+    clearTimeout(wireTopControls._t);
+    wireTopControls._t = setTimeout(renderAllTable, 120);
+  });
+
+  $('#dl-all').onclick = async () => {
+    const rows = applySortToPool(applyAllFilters(allFilesPool()));
+    const names = rows.map(r => r.filename);
+    const resp = await fetch('/api/download-filtered', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ csv: state.csv, filenames: names }),
+    });
+    if (!resp.ok) return nowToast('download failed', true);
+    const blob = await resp.blob();
+    triggerDownload(blob, 'filtered_output.csv');
+  };
+
+  $('#rq-download').onclick = async () => {
+    const rows = sortByPriority(reviewPool());
+    const names = rows.map(r => r.filename);
+    const resp = await fetch('/api/download-filtered', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ csv: state.csv, filenames: names }),
+    });
+    if (!resp.ok) return nowToast('download failed', true);
+    const blob = await resp.blob();
+    triggerDownload(blob, 'review_queue.csv');
+  };
+
+  $('#rq-prev').onclick = () => { state.rqPage = Math.max(0, state.rqPage - 1); renderReviewQueue(); };
+  $('#rq-next').onclick = () => { state.rqPage = state.rqPage + 1; renderReviewQueue(); };
+
+  // ── Column sort headers ─────────────────────────────────────────────────
+  $$('#all-table thead th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (state.sort.col === col) {
+        state.sort.dir = state.sort.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        state.sort.col = col;
+        state.sort.dir = 'asc';
+      }
+      renderAllTable();
+    });
+  });
+}
+
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ───────────────────────────────────────────────────────────
+   Keyboard shortcuts
+   ─────────────────────────────────────────────────────────── */
+
+function _kbNav(dir) {
+  if (state.activeTab !== 'all') return;
+  const rows = $$('#all-table tbody tr[data-filename]');
+  if (!rows.length) return;
+  const cur = rows.findIndex(r => r.dataset.filename === state.selectedAll);
+  let next = cur < 0 ? 0 : Math.max(0, Math.min(rows.length - 1, cur + dir));
+  const fname = rows[next]?.dataset?.filename;
+  if (!fname) return;
+
+  // remove kb-focus from all, add to next
+  rows.forEach(r => r.classList.remove('kb-focus'));
+  rows[next].classList.add('kb-focus');
+  rows[next].scrollIntoView({ block: 'nearest' });
+
+  selectAllRow(fname);
+}
+
+document.addEventListener('keydown', async (e) => {
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+  // J / ArrowDown — next row
+  if (e.key === 'j' || e.key === 'J' || e.key === 'ArrowDown') {
+    if (state.activeTab === 'all') { e.preventDefault(); _kbNav(+1); return; }
+  }
+  // K / ArrowUp — previous row
+  if (e.key === 'k' || e.key === 'K' || e.key === 'ArrowUp') {
+    if (state.activeTab === 'all') { e.preventDefault(); _kbNav(-1); return; }
+  }
+  // Escape — deselect
+  if (e.key === 'Escape') {
+    if (state.activeTab === 'all' && state.selectedAll) {
+      state.selectedAll = null;
+      $$('#all-table tbody tr').forEach(r => {
+        r.classList.remove('selected', 'kb-focus');
+      });
+      $('#detail-panel').innerHTML = '';
+      return;
+    }
+  }
+
+});
+
+/* ───────────────────────────────────────────────────────────
+   Go
+   ─────────────────────────────────────────────────────────── */
+/* ── 05 Radar Comparison ──────────────────────────────────────────────────── */
+
+function switchAnalysis(mode) {
+  const isQuadrant = mode === 'quadrant';
+  $('#quadrant-content').classList.toggle('hidden', !isQuadrant);
+  $('#radar-content').classList.toggle('hidden', isQuadrant);
+  $('#quadrant-mode-btns').style.display = isQuadrant ? 'flex' : 'none';
+  $$('.panel-switch-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === mode));
+  if (isQuadrant) {
+    setTimeout(() => {
+      Plotly.Plots.resize(document.getElementById('chart-quadrant'));
+      renderStructureCharts();
+    }, 60);
+  } else {
+    const dimEl = $('#radar-dim');
+    if (dimEl) dimEl.value = state.radarDim || 'domain';
+    renderDomainRadar(filteredStructurePool());
+  }
+}
+
+function toggleDomainRadarPanel() { switchAnalysis('radar'); }
+
+function changeRadarDim() {
+  state.radarDim = $('#radar-dim').value;
+  state.radarSelection = new Set();
+  renderDomainRadar(filteredStructurePool());
+}
+
+function toggleRadarItem(val) {
+  if (!state.radarSelection) state.radarSelection = new Set();
+  if (state.radarSelection.has(val)) state.radarSelection.delete(val);
+  else state.radarSelection.add(val);
+  renderDomainRadar(filteredStructurePool());
+}
+
+function _radarDimLabel(dim) {
+  return { domain: 'Domain', scale: 'Scale', lifecycle: 'Lifecycle', asset_type: 'Asset Type',
+    information_type: 'Info Type', governance: 'Governance', confidentiality: 'Confidentiality' }[dim] || dim;
+}
+
+function renderDomainRadar(pool) {
+  const scored = pool.filter(r => gScore(r) > 0);
+  const dim    = state.radarDim || 'domain';
+  if (!state.radarSelection) state.radarSelection = new Set();
+
+  const avgArr = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+
+  // ── Group by current dim ──────────────────────────────────────────────────
+  const groupStats = {};
+  for (const r of scored) {
+    const key = getFilterVal(r, dim) || 'Unknown';
+    if (!groupStats[key]) groupStats[key] = { count: 0, scores: [], auth: [], scope: [], urg: [], cov: [], acc: [] };
+    groupStats[key].count++;
+    groupStats[key].scores.push(gScore(r));
+    groupStats[key].auth.push(gAuthority(r));
+    groupStats[key].scope.push(gScope(r));
+    groupStats[key].urg.push(gUrgency(r));
+    groupStats[key].cov.push(gCoverage(r));
+    groupStats[key].acc.push(gAccessibility(r));
+  }
+
+  const allKeys = Object.keys(groupStats).sort();
+
+  // ── Checklist ─────────────────────────────────────────────────────────────
+  const listEl = $('#radar-item-list');
+  if (!allKeys.length) {
+    listEl.innerHTML = '<span style="font-size:11px;color:var(--muted);">No scored files.</span>';
+    return;
+  }
+  listEl.innerHTML = allKeys.map((key, i) => {
+    const s       = groupStats[key];
+    const color   = PALETTE[i % PALETTE.length];
+    const checked = state.radarSelection.has(key) ? 'checked' : '';
+    const warn    = s.count < 5 ? ' ⚠' : '';
+    return `<label style="display:flex;align-items:center;gap:7px;margin-bottom:8px;cursor:pointer;font-size:11px;">
+      <input type="checkbox" ${checked} onchange='toggleRadarItem(${JSON.stringify(key)})' style="cursor:pointer;flex-shrink:0;">
+      <span style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;border:1px solid rgba(0,0,0,0.1);"></span>
+      <span style="flex:1;color:var(--fg);line-height:1.3;">${escHtml(key)}</span>
+      <span style="color:var(--muted);font-size:10px;white-space:nowrap;flex-shrink:0;">${s.count}${warn}</span>
+    </label>`;
+  }).join('');
+
+  // ── Spider chart ──────────────────────────────────────────────────────────
+  const AXES   = ['Authority', 'Scope', 'Urgency', 'Coverage', 'Accessibility'];
+  const LAYOUT = {
+    polar: {
+      radialaxis: {
+        visible: true, range: [0, 10],
+        tickmode: 'array', tickvals: [2, 4, 6, 8, 10],
+        tickfont: { size: 9, color: '#737373' },
+      },
+      angularaxis: { tickfont: { size: 12, color: '#1C1C1E' } },
+      bgcolor: 'rgba(0,0,0,0)',
+    },
+    showlegend: true,
+    legend: { font: { size: 10, family: 'Inter, sans-serif' }, bgcolor: 'rgba(0,0,0,0)', orientation: 'v' },
+    height: 420, margin: { l: 60, r: 60, t: 30, b: 30 },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    font: { family: 'Inter, sans-serif', size: 11 },
+    hoverlabel: { bgcolor: 'white', font: { family: 'Inter', size: 12 }, bordercolor: 'rgba(0,0,0,0.1)' },
+  };
+
+  // Always include a dummy scatterpolar trace so Plotly locks polar coordinates.
+  // Without at least one polar trace, Plotly.react() falls back to Cartesian axes.
+  // Dummy trace covers all 5 axes so Plotly renders the full pentagon even when empty.
+  const dummyTrace = {
+    type: 'scatterpolar',
+    r: AXES.map(() => 0), theta: AXES,
+    mode: 'none', showlegend: false, hoverinfo: 'none',
+    line: { color: 'rgba(0,0,0,0)' },
+  };
+
+  const selectedTraces = allKeys
+    .filter(key => state.radarSelection.has(key))
+    .map(key => {
+      const s     = groupStats[key];
+      const i     = allKeys.indexOf(key);
+      const color = PALETTE[i % PALETTE.length];
+      const vals  = [avgArr(s.auth), avgArr(s.scope), avgArr(s.urg), avgArr(s.cov), avgArr(s.acc)];
+      return {
+        type: 'scatterpolar', name: key,
+        r: [...vals, vals[0]], theta: [...AXES, AXES[0]],
+        fill: 'toself',
+        fillcolor: color + '38',
+        line: { color, width: 2 },
+        marker: { size: 5, color },
+        hovertemplate: `<b>${escHtml(key)}</b> (${s.count} files · avg ${Math.round(avgArr(s.scores))})<br>%{theta}: %{r:.1f}<extra></extra>`,
+      };
+    });
+
+  const isEmpty = !state.radarSelection.size;
+  Plotly.react('chart-domain-radar', [dummyTrace, ...selectedTraces], {
+    ...LAYOUT,
+    showlegend: !isEmpty,
+    annotations: isEmpty ? [{
+      x: 0.5, y: 0.5, xref: 'paper', yref: 'paper',
+      text: 'Select categories',
+      showarrow: false,
+      font: { size: 13, color: '#9B9B9B', family: 'Inter, sans-serif' },
+    }] : [],
+  }, PLOTLY_CFG);
+
+  // ── Right-side file list (files from selected groups, sorted by score desc) ──
+  const fileListEl = $('#radar-file-list');
+  if (!fileListEl) return;
+
+  if (!state.radarSelection.size) {
+    fileListEl.innerHTML = `<span style="color:var(--muted);font-size:11px;line-height:1.5;">
+      Select a category</span>`;
+    return;
+  }
+
+  const listFiles = scored
+    .filter(r => state.radarSelection.has(getFilterVal(r, dim) || 'Unknown'))
+    .sort((a, b) => gScore(b) - gScore(a));
+
+  if (!listFiles.length) {
+    fileListEl.innerHTML = `<span style="color:var(--muted);font-size:11px;">No scored files.</span>`;
+    return;
+  }
+
+  fileListEl.innerHTML = `
+    <div class="label" style="font-size:10px;letter-spacing:.07em;margin-bottom:10px;">
+      FILES · ${listFiles.length}
+    </div>
+    ${listFiles.map((r, i) => {
+      const key   = getFilterVal(r, dim) || 'Unknown';
+      const color = PALETTE[allKeys.indexOf(key) % PALETTE.length] || '#ccc';
+      const fname = r.filename || '';
+      return `<div style="display:flex;align-items:baseline;gap:8px;padding:5px 0;
+          border-bottom:1px solid var(--hairline);cursor:pointer;
+          transition:background .12s;"
+          onmouseenter='this.style.background="#f5f3ef"'
+          onmouseleave='this.style.background="transparent"'
+          onclick='selectFileFromRadar(${JSON.stringify(fname)})'>
+        <span style="font-weight:600;color:${color};flex-shrink:0;min-width:26px;
+            text-align:right;font-family:var(--mono);">#${i + 1}</span>
+        <span style="color:var(--fg);overflow:hidden;text-overflow:ellipsis;
+            white-space:nowrap;flex:1;" title="${escHtml(fname)}">${escHtml(fname)}</span>
+      </div>`;
+    }).join('')}`;
+}
+
+/* ───────────────────────────────────────────────────────────
+   Priority tab — tiered reading list (lexicographic ledger)
+   ─────────────────────────────────────────────────────────── */
+const PL_TAGLINES = {
+  'Statutory':       'Regulatory mandates — non-compliance is illegal or unbuildable. Read first.',
+  'Hard Constraint': 'Engineering realities that cannot be negotiated.',
+  'Client Brief':    'Formally stated client requirements, changeable via scope process.',
+  'Advisory':        'Best-practice recommendations, overrideable with justification.',
+  'Background':      'Pure reference — no direct design consequence.',
+};
+const PL_COLORS = {
+  'Statutory': '#b3261e', 'Hard Constraint': '#c77700', 'Client Brief': '#8a6d1d',
+  'Advisory': '#5b7a99', 'Background': '#9aa0a6',
+};
+
+function renderPriorityLedger() {
+  const el = $('#priority-ledger');
+  if (!el) return;
+  const ranked = state.data
+    .filter(r => gScore(r) > 0)
+    .sort((a, b) => gScore(b) - gScore(a)
+      || String(a.filename || '').localeCompare(String(b.filename || '')));
+  const bands = [...L3_LEVELS.authority].reverse();   // strongest first
+  if (!state.plOpen) {
+    const first = bands.find(lv => ranked.some(r => r.authority === lv));
+    state.plOpen = new Set(first ? [first] : []);
+  }
+  const info = $('#pr-count-info');
+  if (info) info.textContent =
+    `${ranked.length} ranked files`;
+
+  const unranked = state.data.length - ranked.length;
+  el.innerHTML = bands.map(lv => {
+    const rows = ranked.filter(r => r.authority === lv);
+    const open = state.plOpen.has(lv);
+    const color = PL_COLORS[lv] || '#999';
+    const body = !open ? '' : (!rows.length
+      ? `<div class="pl-rows"><div class="pl-empty">No files at this level.</div></div>`
+      : `<div class="pl-rows">${rows.map((r, i) => `
+          <div class="pl-row" onclick='selectFileFromRadar(${JSON.stringify(String(r.filename || ''))})'>
+            <span class="pl-rank">${i + 1}</span>
+            <span class="pl-file" title="${escHtml(r.filename || '')}">${escHtml(r.filename || '')}</span>
+            <span class="pl-lvls">${escHtml(r.scope || '')} · ${escHtml(r.coverage || '')}</span>
+            <span class="pl-why" title="${escHtml(gReason(r))}">${escHtml(gReason(r))}</span>
+          </div>`).join('')}</div>`);
+    return `<div class="pl-band">
+      <div class="pl-head" onclick='togglePlBand(${JSON.stringify(lv)})'>
+        <span class="pl-caret">${open ? '▼' : '▶'}</span>
+        <span class="pl-dot" style="background:${color}"></span>
+        <span class="pl-name" title="${escHtml(PL_TAGLINES[lv] || '')}">${escHtml(lv)}</span>
+        <span class="pl-ct">${rows.length}</span>
+      </div>${body}</div>`;
+  }).join('') + `<div class="pl-foot">${unranked} unranked · not scored, not low priority.</div>`;
+}
+
+function togglePlBand(lv) {
+  if (!state.plOpen) state.plOpen = new Set();
+  if (state.plOpen.has(lv)) state.plOpen.delete(lv); else state.plOpen.add(lv);
+  renderPriorityLedger();
+}
+
+function selectFileFromRadar(filename) {
+  // Switch to All Files tab if needed
+  const allTab = document.querySelector('.tab[data-tab="all"]');
+  if (allTab && !allTab.classList.contains('active')) {
+    state.selectedAll = null; // clear so selectAllRow doesn't toggle-off
+    allTab.click();
+  }
+  // Reset selection state before calling selectAllRow to avoid the toggle-off bug
+  state.selectedAll = null;
+  selectAllRow(filename);
+  setTimeout(() => {
+    document.getElementById('detail-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 80);
+}
+
+function toggleQuadrantPanel() { switchAnalysis('quadrant'); }
+
+wireTabs();
+wireTopControls();
+boot();
+
+/* ── Hamburger ── */
+function toggleHam() { document.getElementById('hamMenu').classList.toggle('open'); }
+document.addEventListener('click', e => {
+  if (!e.target.closest('#hamBtn') && !e.target.closest('#hamMenu'))
+    document.getElementById('hamMenu')?.classList.remove('open');
+});
+
+</script>
+
+</body>
+</html>

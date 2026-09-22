@@ -1,0 +1,24 @@
+SYNTHETIC DEMO — illustrative training case, not an authentic project record.
+
+
+CASE OVERVIEW
+
+This synthetic case follows a hypothetical 28-hectare urban renewal study in Amsterdam Zuidoost, focused on a representative Bijlmermeer superblock called Cluster B. The learning question is how an archive of planning, social, technical, and delivery documents can be classified before a design team decides what to read first.
+
+The case uses real public themes associated with Bijlmermeer: post-war high-rise planning, elevated movement systems, large green spaces, later renewal, housing diversification, and the memory of the 1992 cargo-plane disaster. The project name, boundaries, figures, dates, organisations, survey results, and decisions below are invented for this DataTaxonomy demonstration.
+
+SYNTHETIC PROJECT THESIS
+
+The hypothetical team proposes a repair-and-reconnect strategy rather than wholesale clearance. Existing tower blocks are assessed for selective retrofit; parking and service edges become active streets; a continuous rain garden and ecological corridor links neighbourhood spaces; and new mid-rise housing adds tenure diversity without displacing current residents.
+
+CORE PROJECT QUESTIONS
+
+1. Which existing structures can be retained safely and economically?
+2. How should pedestrian, bicycle, bus, and service movement be reorganised around safer street edges?
+3. How can flood storage, shade, biodiversity, and everyday public life share the green spine?
+4. Which decisions are statutory or physically binding, and which are advisory?
+5. Which files should a design lead read first during Concept / Schematic stage?
+
+DEMO SETUP
+
+The 37 files are deliberately mixed: narrative documents, tables, spatial data, a simplified coordination model, visual material, meeting records, and delivery controls. The expected output is a searchable CSV with domain, scale, lifecycle, asset type, governance, confidentiality, certainty, and decision-priority fields. This is a synthetic training case, not a planning submission or historical archive.
