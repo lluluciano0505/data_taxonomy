@@ -1,0 +1,31 @@
+# Portable Biljmermeer demo configuration.
+# Import this file from the configuration wizard, then choose your provider/key.
+project:
+  name: Amsterdam Bijlmermeer Urban Renewal Demo
+  location: Amsterdam, Netherlands
+  year_range: [1968, 2030]
+  lead_firm: Synthetic case study
+  consultants: []
+  authorities: []
+  notes: Synthetic demonstration project for DataTaxonomy. Not a real client record.
+paths:
+  input_dir: demo_data/Amsterdam_Bijlmermeer_Urban_Renewal_Case
+  output_csv: outputs/bijlmermeer_demo.csv
+  taxonomy_path: taxonomies/bijlmermeer_demo.yaml
+processing:
+  provider: openrouter
+  model: ""
+  base_url: https://openrouter.ai/api/v1
+  sample_n: 10
+  parallel_workers: 2
+  api_timeout: 60
+  delay: 0.3
+  incremental: false
+age_analysis:
+  warn_predates_years: 10
+  warn_postproject_years: 3
+configuration:
+  port: 5173
+dashboard:
+  port: 5174
+  auto_launch: true

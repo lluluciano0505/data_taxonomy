@@ -1,0 +1,6 @@
+"SYNTHETIC DEMO — illustrative training case, not an authentic project record.",,,,,
+location,mode,weekday_count,peak_period,count_method,data_status
+Karspeldreef crossing,pedestrian,1260,08:00-09:00,illustrative manual count,synthetic
+Karspeldreef crossing,bicycle,438,08:00-09:00,illustrative manual count,synthetic
+Service court east,delivery vehicle,76,10:00-11:00,illustrative camera sample,synthetic
+Metro connection route,bus transfer,690,17:00-18:00,illustrative operator estimate,synthetic

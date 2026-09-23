@@ -1,0 +1,5 @@
+"SYNTHETIC DEMO — illustrative training case, not an authentic project record.",,,,,,
+zone,households,population_estimate,under_18_pct,over_65_pct,rental_pct,data_status
+Cluster B North,168,392,27,12,78,synthetic estimate
+Cluster B Central,142,338,24,16,81,synthetic estimate
+Cluster B South,110,251,21,19,74,synthetic estimate

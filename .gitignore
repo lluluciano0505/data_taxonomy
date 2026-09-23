@@ -15,6 +15,10 @@ saved_configs.json
 *.taxonomy.yaml
 *.bak
 
+# Reference demo outputs are intentionally versioned under demo_data/
+!demo_data/**/*.csv
+!demo_data/**/*.yaml
+
 # Local Python environment and caches
 .venv/
 __pycache__/

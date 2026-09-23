@@ -1,0 +1,4 @@
+rfi_id,subject,discipline,raised,due,status,related_document,synthetic
+RFI-014,Entrance threshold level,Architecture,2025-04-18,2025-05-02,Open,A-101,True
+RFI-018,Rainwater pipe in facade,MEP,2025-04-23,2025-05-06,Open,TN-008,True
+RFI-021,Tree pit above service route,Landscape,2025-04-25,2025-05-05,Under review,L-201,True

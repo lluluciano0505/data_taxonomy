@@ -1,0 +1,5 @@
+plant_id,zone,species,size_cm,quantity,status,synthetic
+T01,Courtyard,Acer campestre,18,14,Proposed,True
+T02,Street edge,Tilia cordata,20,22,Proposed,True
+T03,Rain garden,Alnus glutinosa,16,8,Proposed,True
+T04,South pocket,Betula pendula,16,11,Proposed,True
