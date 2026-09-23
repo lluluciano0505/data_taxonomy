@@ -28,29 +28,48 @@ This package is intentionally distributed without project data, previous outputs
 - Internet access for package installation and the configured LLM provider
 - An OpenRouter API key for the default configuration
 
-## Installation
+## Installation and one-click startup
 
-1. Extract this package to a local folder. Do not extract it into a client project folder.
-2. Double-click `install.bat`.
-3. Allow the installer to create a local Python virtual environment.
-4. Enter the user's own OpenRouter API key when prompted.
-5. After installation, start the application with:
+For a Windows user who has never used Python:
+
+1. Extract this package to a local folder. Do not extract it into a client project folder or a cloud-synced folder while it is running.
+2. Double-click `start_dashboard.bat`.
+3. Wait while the installer finds or installs Python, creates a private virtual environment, and installs the packages. The first installation can take several minutes.
+4. Enter the user's own API key when the setup dialog appears. The key is saved only in the local `.env` file.
+5. The browser opens the setup page automatically. No terminal commands are required.
+6. On later days, double-click `start_dashboard.bat` again. It reuses the installation and opens the Dashboard.
+
+The installer creates a local `.env` and `config.yaml`. Both files are user-specific and must never be copied back into a release package.
+
+Useful shortcuts:
+
+- `start_dashboard.bat` — install if needed, start the local services, and open the correct browser page.
+- `stop_dashboard.bat` — stop the local services before restarting or moving the package.
+- Configuration page — `http://localhost:5173` (default).
+- Dashboard — `http://localhost:5174` (default).
+
+## First-time setup
+
+The browser setup page walks through the process in order:
+
+1. Choose an AI provider and model, paste the user's own API key, and click **Save & Verify Connection**.
+2. Enter the project name, location, and date range. The URL autofill option is optional.
+3. Click **Choose Folder…** to select the folder containing the project files. On Windows this opens the native folder picker.
+4. Choose a small sample size for the first test, or leave it set to all files for a complete run.
+5. Select or edit the taxonomy, review the summary, and save the project.
+6. Start the pipeline from the project page. The results dashboard opens when processing is complete.
+
+The application supports PDF, DOCX, PPTX, XLSX, TXT, PNG, JPG, DWG, IFC, and other formats listed in the setup page. Text PDFs and ordinary Office files work without extra system software. Tesseract OCR improves scanned/image-only PDF extraction; missing OCR is a warning, not an installation failure.
+
+## Manual startup (troubleshooting only)
+
+If the one-click launcher cannot be used, open a terminal in the package folder and run:
 
 ```text
 .venv\Scripts\python.exe main.py --dashboard-only
 ```
 
-The installer creates a local `.env` and `config.yaml`. Both files are user-specific and must never be copied back into a release package.
-
-## First-time setup
-
-1. Open the configuration page at `http://localhost:5173`.
-2. Enter the project name and project context.
-3. Select the user's input folder.
-4. Choose an output CSV name under `outputs/`.
-5. Select or edit the taxonomy.
-6. Start the pipeline.
-7. Open the dashboard at `http://localhost:5174` when processing finishes.
+Then open `http://localhost:5173`. Stop the services with `stop_dashboard.bat` or close the Python processes.
 
 For a small first run, use the sample option in the wizard or run:
 

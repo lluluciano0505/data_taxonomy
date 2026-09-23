@@ -1,6 +1,5 @@
-# DataTaxonomy user configuration template.
-# The installer copies this file to config.yaml on first setup.
-# Replace the input_dir with the user's project folder.
+# This file is copied automatically on first launch.
+# Most users should use the browser setup page instead of editing this file.
 
 project:
   name: Your Project Name
@@ -22,7 +21,7 @@ paths:
 processing:
   provider: openrouter     # openrouter | vectorengine | deepseek | custom
   sample_n: 20              # Use 0 or leave blank to process all files.
-  model: google/gemini-2.0-flash-001
+  model: ""                # Choose a model in the setup page.
   base_url: https://openrouter.ai/api/v1
   parallel_workers: 4
   api_timeout: 60
@@ -32,6 +31,9 @@ processing:
 age_analysis:
   warn_predates_years: 10
   warn_postproject_years: 3
+
+configuration:
+  port: 5173
 
 dashboard:
   port: 5174

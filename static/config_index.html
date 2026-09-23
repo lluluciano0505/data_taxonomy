@@ -375,7 +375,8 @@
 
   <!-- ── Projects ── -->
   <h1>Your Projects</h1>
-  
+  <p style="color:var(--muted);max-width:58ch;margin:-8px 0 24px;">First time here? Create a project, choose your document folder, and follow the setup steps. You do not need Python or command-line knowledge.</p>
+
 
   <div class="info-bar" id="infoBar"></div>
   <div class="projects-grid" id="projectsGrid"></div>
@@ -518,7 +519,7 @@ function renderProjects(projects, currentCfg) {
     grid.innerHTML = `
       <div style="grid-column:1/-1;">
         <div style="text-align:center;padding:60px 20px;">
-          <p style="color:var(--muted);margin-bottom:20px;">No saved projects yet.</p>
+          <p style="color:var(--muted);margin-bottom:20px;">No saved projects yet. Create your first project to choose a folder and begin.</p>
           <button class="project-card new-card" style="display:inline-flex;width:auto;padding:14px 28px;"
                   onclick="openNewModal()">+ Create First Project</button>
         </div>

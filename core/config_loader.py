@@ -62,9 +62,12 @@ def load_config(config_path: str = "config.yaml") -> dict:
     return config or {}
 
 
-def expand_path(path_str: str) -> Path:
-    """Expand ~ and convert to absolute Path."""
-    return Path(path_str).expanduser().absolute()
+def expand_path(path_str: str, base_dir: Path | None = None) -> Path:
+    """Expand a user path, resolving relative paths from the app directory."""
+    path = Path(str(path_str)).expanduser()
+    if not path.is_absolute() and base_dir is not None:
+        path = base_dir / path
+    return path.absolute()
 
 
 def get_project_config(config: dict) -> dict:
@@ -83,14 +86,13 @@ def get_paths_config(config: dict) -> PathsConfig:
     """Extract and validate paths configuration."""
     paths = config.get("paths", {})
     _root = Path(__file__).parent.parent.resolve()
+    input_raw = paths.get("input_dir", "~/Desktop")
+    output_raw = paths.get("output_csv", "output.csv")
+    taxonomy_raw = paths.get("taxonomy_path", "taxonomy.yaml")
     return PathsConfig(
-        input_dir     = expand_path(paths.get("input_dir", "~/Desktop")),
-        output_csv    = expand_path(paths.get("output_csv", "output.csv"))
-                        if Path(paths.get("output_csv", "")).is_absolute()
-                        else _root / paths.get("output_csv", "output.csv"),
-        taxonomy_path = str(_root / paths.get("taxonomy_path", "taxonomy.yaml"))
-                        if not Path(paths.get("taxonomy_path", "taxonomy.yaml")).is_absolute()
-                        else paths.get("taxonomy_path", "taxonomy.yaml"),
+        input_dir     = expand_path(input_raw, _root),
+        output_csv   = expand_path(output_raw, _root),
+        taxonomy_path = str(expand_path(taxonomy_raw, _root)),
     )
 
 

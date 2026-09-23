@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch, Mock
 
 from core.api_connection import connection_config, get_api_key, normalize_base_url
-from core.config_loader import get_processing_config
+from core.config_loader import get_paths_config, get_processing_config
 from server import config_server as server
 
 
@@ -26,6 +26,21 @@ class ConnectionTests(unittest.TestCase):
             self.assertEqual(get_api_key('vectorengine')[0], '')
             self.assertEqual(get_api_key('deepseek')[0], 'deep')
             self.assertEqual(get_api_key('openrouter')[0], 'backup')
+
+    def test_relative_paths_resolve_from_application_root(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            # The loader's application root is the repository root; relative
+            # output/taxonomy paths must not depend on the caller's cwd.
+            cfg = get_paths_config({'paths': {
+                'input_dir': 'project files',
+                'output_csv': 'outputs/result.csv',
+                'taxonomy_path': 'taxonomies/project.yaml',
+            }})
+            app_root = Path(__file__).resolve().parents[1]
+            self.assertEqual(cfg.input_dir, (app_root / 'project files').absolute())
+            self.assertEqual(cfg.output_csv, (app_root / 'outputs/result.csv').absolute())
+            self.assertEqual(cfg.taxonomy_path, str((app_root / 'taxonomies/project.yaml').absolute()))
 
     def test_connection_endpoints(self):
         with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {}, clear=True):

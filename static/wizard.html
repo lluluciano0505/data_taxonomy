@@ -442,7 +442,7 @@
   <section class="panel active" data-panel="1">
     <h1 class="page-title">Connect your AI.</h1>
     <p class="page-lede">
-      Choose a provider and model, then verify your API key.
+      Choose your AI connection first. Then tell DataTaxonomy about the project and choose the folder to scan. You can use the buttons and folder picker without opening a terminal.
     </p>
 
     <div style="margin-bottom:40px;">
@@ -529,13 +529,13 @@
     <h1 class="page-title">Where your files live.</h1>
     <p class="page-lede">
       Point us at the folder containing your project documents — scanned recursively.
-      The output is a single CSV.
+      For a first test, choose a small sample; you can run all files later.
     </p>
 
     <div class="help-row">
       <span class="kicker">Heads up</span>
       <p>We support <strong>PDF, DOCX, PPTX, XLSX, TXT, PNG, JPG, DWG, IFC</strong> and more.
-        Files larger than a few hundred MB may be slow.</p>
+        Files larger than a few hundred MB may be slow. For a first test, use a small sample size in Advanced processing settings.</p>
     </div>
 
     <div class="err-bar" id="err-3"></div>
@@ -544,7 +544,7 @@
       <div class="field required"><span class="label">Input Directory</span>
         <button type="button" class="ghost-btn" onclick="pickFolder()">Choose Folder…</button>
         <input id="f_input" type="text" placeholder="Select a folder or paste its full path" />
-        <span class="hint">Files stay on your computer. Extracted text and relevant images are sent to your selected AI provider.</span></div>
+        <span class="hint">Your key is stored only on this computer. DataTaxonomy sends file names, extracted text, and selected previews to the provider for classification.</span></div>
       <div class="field required"><span class="label">Output CSV</span>
         <div style="display:flex; align-items:center; gap:0; border:0; border-radius:9px; overflow:hidden; background:#f4f4f0;">
           <span style="padding:8px 10px; background:var(--bg); color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:12px; border-right:0; white-space:nowrap;">outputs/</span>

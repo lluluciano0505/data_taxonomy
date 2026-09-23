@@ -24,11 +24,12 @@ cd /d "!ROOT!"
 :: ------------------------------------------------
 :: STEP 1: Find or install Python
 :: ------------------------------------------------
-echo  [1/6]  Checking for Python 3...
+echo  [1/6]  Checking for Python 3.10 or newer...
 set "PYTHON_CMD="
+set "PYTHON_ARGS="
 
-:: Try system python in PATH
-python --version >nul 2>&1
+:: Prefer a working Python already on PATH, but reject old versions.
+python -c "import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)" >nul 2>&1
 if !errorlevel! equ 0 (
     for /f "tokens=*" %%v in ('python --version 2^>^&1') do set "PYVER=%%v"
     echo         Found: !PYVER!
@@ -36,31 +37,43 @@ if !errorlevel! equ 0 (
     goto :venv
 )
 
-:: Try common user-install locations
-for /d %%d in ("%LOCALAPPDATA%\Programs\Python\Python3*") do (
-    if exist "%%d\python.exe" (
-        set "PYTHON_CMD=%%d\python.exe"
-        set "PATH=%%d;%%d\Scripts;!PATH!"
-        for /f "tokens=*" %%v in ('"%%d\python.exe" --version 2^>^&1') do set "PYVER=%%v"
+:: The Python launcher is common on a fresh Windows installation.
+for %%v in (3.12 3.11 3.10) do (
+    py -%%v -c "import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)" >nul 2>&1
+    if !errorlevel! equ 0 (
+        for /f "tokens=*" %%p in ('py -%%v --version 2^>^&1') do set "PYVER=%%p"
         echo         Found: !PYVER!
+        set "PYTHON_CMD=py"
+        set "PYTHON_ARGS=-%%v"
         goto :venv
     )
 )
 
-:: Try installing via Windows Package Manager (winget)
+:: Try installing via Windows Package Manager (winget).
 echo         Python not found. Trying automatic install...
 echo         ^(This may take a minute - please wait^)
 echo.
 winget install -e --id Python.Python.3.12 --silent --accept-package-agreements --accept-source-agreements >nul 2>&1
 
 if !errorlevel! equ 0 (
-    :: Refresh PATH with newly installed location
+    py -3.12 -c "import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)" >nul 2>&1
+    if !errorlevel! equ 0 (
+        set "PYTHON_CMD=py"
+        set "PYTHON_ARGS=-3.12"
+        set "PYVER=Python 3.12"
+        echo         Python installed successfully.
+        goto :venv
+    )
     for /d %%d in ("%LOCALAPPDATA%\Programs\Python\Python3*") do (
         if exist "%%d\python.exe" (
-            set "PYTHON_CMD=%%d\python.exe"
-            set "PATH=%%d;%%d\Scripts;!PATH!"
-            echo         Python installed successfully.
-            goto :venv
+            "%%d\python.exe" -c "import sys; raise SystemExit(0 if sys.version_info >= (3,10) else 1)" >nul 2>&1
+            if !errorlevel! equ 0 (
+                set "PYTHON_CMD=%%d\python.exe"
+                set "PATH=%%d;%%d\Scripts;!PATH!"
+                set "PYVER=Python installed in %%d"
+                echo         Python installed successfully.
+                goto :venv
+            )
         )
     )
 )
@@ -91,7 +104,7 @@ echo.
 echo  [2/6]  Setting up isolated environment...
 
 if not exist ".venv" (
-    "!PYTHON_CMD!" -m venv .venv
+    "!PYTHON_CMD!" !PYTHON_ARGS! -m venv .venv
     if !errorlevel! neq 0 (
         echo.
         echo  [!] Failed to create virtual environment.
@@ -112,8 +125,12 @@ echo         ^(First-time install may take 3-5 minutes^)
 echo.
 
 call ".venv\Scripts\activate.bat"
-python -m pip install --upgrade pip --quiet
-pip install -r requirements.txt
+".venv\Scripts\python.exe" -m pip install --upgrade pip --quiet
+if !errorlevel! neq 0 (
+    echo [!] Could not update pip. Check your internet connection.
+    exit /b 1
+)
+".venv\Scripts\python.exe" -m pip install -r requirements.txt
 
 if !errorlevel! neq 0 (
     echo.
@@ -215,7 +232,7 @@ if exist "config.yaml" (
 
 copy config.example.yaml config.yaml >nul
 echo         Created config.yaml from template.
-echo         ^(You can configure your project folder inside the app.^)
+echo         (You can configure your project folder inside the app.)
 
 :: ------------------------------------------------
 :: Done
@@ -226,10 +243,12 @@ echo  ================================================
 echo    Installation complete!
 echo  ================================================
 echo.
-echo    To start DataTaxonomy, open a terminal in
-echo    this folder and run:
-echo.
-echo        python main.py --dashboard-only
+if defined INSTALLER_FROM_LAUNCHER (
+    echo    Returning to the one-click launcher...
+    endlocal
+    exit /b 0
+)
+echo    Double-click start_dashboard.bat to open DataTaxonomy.
 echo.
 pause
 endlocal
