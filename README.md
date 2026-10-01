@@ -61,6 +61,18 @@ The browser setup page walks through the process in order:
 
 The application supports PDF, DOCX, PPTX, XLSX, TXT, PNG, JPG, DWG, IFC, and other formats listed in the setup page. Text PDFs and ordinary Office files work without extra system software. Tesseract OCR improves scanned/image-only PDF extraction; missing OCR is a warning, not an installation failure.
 
+## Resuming an interrupted run
+
+Full runs save a local checkpoint beside the configured output CSV. If processing is stopped or the application closes unexpectedly, reopen the Configuration page and choose **Resume** to continue the same project. Completed CSV rows are retained; cached extraction work is reused; files not yet fully classified are continued. Resume checks the saved file inventory, file size/modification signatures, project settings, selected model, and taxonomy. If those no longer match, restore the original inputs/settings or start a fresh run rather than mixing results.
+
+Resume checkpoints contain extracted classification context and local file paths, but no API key. They are generated user data and must not be shared without review. A new full run replaces the current output; use Resume after interruption, and use Incremental only when intentionally adding new files to an existing output.
+
+The command-line equivalent is:
+
+```text
+.venv\\Scripts\\python.exe main.py --resume
+```
+
 ## Manual startup (troubleshooting only)
 
 If the one-click launcher cannot be used, open a terminal in the package folder and run:
@@ -86,6 +98,7 @@ For a small first run, use the sample option in the wizard or run:
 .venv\Scripts\python.exe main.py --rerun certainty=Low
 .venv\Scripts\python.exe main.py --no-dashboard
 ```
+
 
 ## Local files created after installation
 

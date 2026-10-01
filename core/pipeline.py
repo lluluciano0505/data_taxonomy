@@ -1,4 +1,6 @@
 import csv
+import hashlib
+import json
 import os
 import time
 import random
@@ -635,6 +637,88 @@ def _l3l4_safe(args: tuple) -> tuple:
         return (fp, None, str(e))
 
 
+# ── Durable resume checkpoint helpers ─────────────────────────────────────
+def _file_signature(path: Path) -> dict:
+    stat = path.stat()
+    return {"size": stat.st_size, "mtime_ns": stat.st_mtime_ns}
+
+
+def _resume_signature(input_path: Path, output_csv: Path, files: list[Path], config: dict) -> str:
+    safe_config = {k: v for k, v in config.items()
+                   if k not in {"api_key", "input_path", "_folder_results", "_folder_lock"}}
+    safe_config.pop("taxonomy", None)
+    try:
+        config_blob = json.dumps(safe_config, sort_keys=True, default=str, ensure_ascii=False)
+    except (TypeError, ValueError):
+        config_blob = str(safe_config)
+    taxonomy_hash = hashlib.sha256(json.dumps(config.get("taxonomy"), sort_keys=True,
+                                              default=str, ensure_ascii=False).encode("utf-8")).hexdigest()
+    project_intel = config.get("project_intel")
+    if project_intel is None:
+        project_intel_hash = None
+    else:
+        project_intel_hash = hashlib.sha256(json.dumps(project_intel, sort_keys=True,
+                                                        default=str, ensure_ascii=False).encode("utf-8")).hexdigest()
+    manifest = {
+        "input": str(input_path.resolve()),
+        "output": str(output_csv.resolve()),
+        "files": sorted((str(path.resolve()), _file_signature(path)) for path in files),
+        "config": hashlib.sha256(config_blob.encode("utf-8")).hexdigest(),
+        "taxonomy": taxonomy_hash,
+        "project_intel": project_intel_hash,
+    }
+    blob = json.dumps(manifest, sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def _write_resume_manifest(path: Path, signature: str, input_path: Path,
+                           output_csv: Path, files: list[Path],
+                           project_intel: dict | None = None) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    tmp_path.write_text(json.dumps({
+        "signature": signature,
+        "input_path": str(input_path.resolve()),
+        "output_csv": str(output_csv.resolve()),
+        "file_count": len(files),
+        "files": [str(file.resolve()) for file in files],
+        "project_intel": project_intel,
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    os.replace(tmp_path, path)
+
+
+def _read_l1l2_checkpoint(path: Path) -> dict[str, dict]:
+    entries: dict[str, dict] = {}
+    if not path.exists():
+        return entries
+    # Ignore an incomplete trailing line left by a power loss during append.
+    with path.open("r", encoding="utf-8") as stream:
+        for line in stream:
+            try:
+                entry = json.loads(line)
+                fp = str(Path(entry["file_path"]).resolve())
+                entry["file_path"] = fp
+                if entry.get("file_signature") == _file_signature(Path(fp)):
+                    entries[fp] = entry
+            except (json.JSONDecodeError, KeyError, OSError, TypeError):
+                continue
+    return entries
+
+
+_CHECKPOINT_LOCK = threading.Lock()
+
+
+def _append_l1l2_checkpoint(path: Path, file_path: Path, l1: dict, l2: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    entry = {"file_path": str(file_path), "file_signature": _file_signature(file_path),
+             "l1": l1, "l2": l2}
+    with _CHECKPOINT_LOCK, path.open("a", encoding="utf-8") as stream:
+        stream.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
 # ── Batch runner ──────────────────────────────────────────────────────────
 def run(
     input_path:  Path,
@@ -644,6 +728,7 @@ def run(
     on_progress: Optional[callable] = None,
     parallel:    int = 1,
     incremental: bool = False,
+    resume:      bool = False,
 ) -> dict:
     """
     Two-phase batch processor:
@@ -661,6 +746,7 @@ def run(
     on_progress(i, total, row) — optional callback for progress updates.
     parallel  — number of parallel workers for both Phase 1 and Phase 2.
     incremental — if True, skip already-processed files and append new rows.
+    resume — if True, continue a compatible interrupted run using durable L1/L2 checkpoints.
     """
     config = {**config, "input_path": input_path}
 
@@ -673,7 +759,13 @@ def run(
         and not p.name.startswith(".")
     ]
 
-    if incremental and output_csv.exists():
+    if resume and incremental:
+        raise ValueError("Resume cannot be combined with incremental mode")
+
+    if resume:
+        files = all_files
+        scope_label = f"RESUME {len(files)} files (pending work only)"
+    elif incremental and output_csv.exists():
         processed_paths = read_processed_paths(output_csv)
         files = [f for f in all_files if str(f) not in processed_paths]
         if sample_n and sample_n < len(files):
@@ -687,6 +779,48 @@ def run(
     else:
         files       = all_files
         scope_label = f"ALL {len(all_files)}"
+
+    checkpoint_path = Path(str(output_csv) + ".resume.jsonl")
+    manifest_path = Path(str(output_csv) + ".resume.json")
+    if resume:
+        if not manifest_path.exists():
+            raise ValueError("No resumable checkpoint was found for this output. Start a fresh run instead.")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        selected = {str(Path(item)) for item in manifest.get("files", [])}
+        files = [path for path in all_files if str(path.resolve()) in selected]
+        if len(files) != len(selected):
+            raise ValueError("Some files from the interrupted run are missing. Restore them before resuming.")
+        resume_signature = _resume_signature(input_path, output_csv, files, config)
+        expected_signature = _resume_signature(
+            input_path, output_csv, files, config | {"project_intel": manifest.get("project_intel")}
+        ) if manifest.get("project_intel") is not None else resume_signature
+        if manifest.get("signature") != expected_signature:
+            raise ValueError("This checkpoint belongs to different inputs or settings. Start a fresh run or restore the original project settings.")
+    else:
+        resume_signature = _resume_signature(input_path, output_csv, files, config)
+    if not resume and not incremental:
+        _write_resume_manifest(manifest_path, resume_signature, input_path, output_csv, files)
+        checkpoint_path.write_text("", encoding="utf-8")
+        if output_csv.exists():
+            output_csv.unlink()
+
+    run_files = list(files)
+    completed_paths = {str(Path(path).resolve()) for path in read_processed_paths(output_csv)} if ((resume or incremental) and output_csv.exists()) else set()
+    if resume:
+        files = [fp for fp in run_files if str(fp.resolve()) not in completed_paths]
+
+    checkpointed = _read_l1l2_checkpoint(checkpoint_path) if resume else {}
+    checkpointed = {fp: result for fp, result in checkpointed.items()
+                    if any(str(path.resolve()) == fp for path in run_files)}
+    for fp in list(checkpointed):
+        if _file_signature(Path(fp)) != checkpointed[fp].get("file_signature"):
+            del checkpointed[fp]
+    phase1_files = [fp for fp in files if str(fp.resolve()) not in checkpointed]
+
+    if resume and not files:
+        return {"scope": scope_label, "total": 0, "errors": 0, "llm_failures": 0,
+                "risk_critical": 0, "risk_high": 0, "risk_medium": 0, "risk_low": 0,
+                "duration_s": 0, "output_csv": str(output_csv)}
 
     if incremental and not files:
         print("\n[OK] All files already processed -- nothing to add.\n")
@@ -702,13 +836,21 @@ def run(
     )
 
     # ── Project Intelligence (L3 urgency context) ─────────────────────────
-    print(">> Scanning for project meeting / decision documents...")
-    project_intel = extract_project_intelligence(
-        input_path  = input_path,
-        client      = client,
-        model       = config["model"],
-        api_timeout = int(config.get("api_timeout", 30)),
-    )
+    resume_manifest = manifest if resume else {}
+    if resume and resume_manifest.get("project_intel") is not None:
+        project_intel = resume_manifest["project_intel"]
+    else:
+        print(">> Scanning for project meeting / decision documents...")
+        project_intel = extract_project_intelligence(
+            input_path  = input_path,
+            client      = client,
+            model       = config["model"],
+            api_timeout = int(config.get("api_timeout", 30)),
+        )
+        if not resume and not incremental:
+            resume_signature = _resume_signature(input_path, output_csv, run_files, config | {"project_intel": project_intel})
+            _write_resume_manifest(manifest_path, resume_signature, input_path, output_csv,
+                                   run_files, project_intel=project_intel)
     _src = project_intel.get("sources", [])
     if _src:
         print(f"   Found {len(_src)} meeting/decision file(s): "
@@ -719,6 +861,15 @@ def run(
     # ── Shared state ──────────────────────────────────────────────────────
     _folder_results: dict = {}
     _folder_lock    = threading.Lock()
+    for fp, entry in checkpointed.items():
+        l1, l2 = entry["l1"], entry["l2"]
+        folder = str(Path(fp).parent)
+        _folder_results.setdefault(folder, []).append({
+            "filename": l1.get("filename", ""), "domain": l2.get("domain", "Unknown"),
+            "lifecycle": l2.get("lifecycle", "Unknown"),
+            "asset_type": l2.get("asset_type", "Unknown"),
+            "certainty": l2.get("certainty", "Low"),
+        })
 
     config = {
         **config,
@@ -728,6 +879,8 @@ def run(
     }
 
     output_csv.parent.mkdir(parents=True, exist_ok=True)
+    if not output_csv.exists():
+        write_rows([], output_csv, mode="w")
     start_time = time.time()
 
     print(f"""
@@ -743,9 +896,12 @@ def run(
     # ═════════════════════════════════════════════════════════════════════
     # PHASE 1 — L1 + L2 for all files (parallel)
     # ═════════════════════════════════════════════════════════════════════
-    print(f"-- Phase 1/2: L1+L2 extraction & classification ({len(files)} files) --\n")
+    print(f"-- Phase 1/2: L1+L2 extraction & classification ({len(phase1_files)} files; {len(checkpointed)} cached) --\n")
 
-    l1l2_results: dict[Path, tuple[dict, dict]] = {}
+    l1l2_results: dict[Path, tuple[dict, dict]] = {
+        Path(fp): (entry["l1"], entry["l2"])
+        for fp, entry in checkpointed.items()
+    }
     p1_errors    = 0
     p1_error_log: list[dict] = []
     p1_start     = time.time()
@@ -754,32 +910,34 @@ def run(
         with ThreadPoolExecutor(max_workers=parallel) as executor:
             futures = {
                 executor.submit(_l1l2_safe, (fp, config)): fp
-                for fp in files
+                for fp in phase1_files
             }
             done = 0
             for future in as_completed(futures):
                 done += 1
                 fp, l1, l2, err = future.result()
                 elapsed  = time.time() - p1_start
-                eta_secs = int((elapsed / done) * (len(files) - done)) if done > 1 else 0
+                eta_secs = int((elapsed / done) * (len(phase1_files) - done)) if done > 1 else 0
                 eta_str  = f"{eta_secs//60}m{eta_secs%60:02d}s" if done > 1 else "--"
-                print(f"  L2 [{done:04d}/{len(files)}] {fp.name:<50} ETA {eta_str} ", end="", flush=True)
+                print(f"  L2 [{done:04d}/{len(phase1_files)}] {fp.name:<50} ETA {eta_str} ", end="", flush=True)
                 if err:
                     print(f"x  {err}")
                     p1_errors += 1
                     p1_error_log.append({"phase": 1, "filename": fp.name, "file_path": str(fp), "error": err})
                 else:
                     l1l2_results[fp] = (l1, l2)
+                    _append_l1l2_checkpoint(checkpoint_path, fp, l1, l2)
                     print(f"ok  {str(l2.get('domain',''))[:20]:<20} | {l2.get('lifecycle','')}")
     else:
-        for i, fp in enumerate(files, 1):
+        for i, fp in enumerate(phase1_files, 1):
             elapsed  = time.time() - p1_start
-            eta_secs = int((elapsed / i) * (len(files) - i)) if i > 1 else 0
+            eta_secs = int((elapsed / i) * (len(phase1_files) - i)) if i > 1 else 0
             eta_str  = f"{eta_secs//60}m{eta_secs%60:02d}s" if i > 1 else "--"
-            print(f"  L2 [{i:04d}/{len(files)}] {fp.name:<50} ETA {eta_str} ", end="", flush=True)
+            print(f"  L2 [{i:04d}/{len(phase1_files)}] {fp.name:<50} ETA {eta_str} ", end="", flush=True)
             try:
                 l1, l2 = _run_l1l2(fp, client, config)
                 l1l2_results[fp] = (l1, l2)
+                _append_l1l2_checkpoint(checkpoint_path, fp, l1, l2)
                 print(f"ok  {str(l2.get('domain',''))[:20]:<20} | {l2.get('lifecycle','')}")
             except Exception as e:
                 print(f"x  {e}")
@@ -808,13 +966,13 @@ def run(
     # ═════════════════════════════════════════════════════════════════════
     print(f"\n-- Phase 2/2: L3+L4 priority & trust assessment ({len(l1l2_results)} files) --\n")
 
-    csv_mode = "a" if (incremental and output_csv.exists()) else "w"
+    csv_mode = "a" if ((incremental or resume) and output_csv.exists()) else "w"
     ok_count = error_count = llm_fail_count = 0
     risk_counts = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0}
     p2_error_log: list[dict] = []
     p2_start = time.time()
 
-    ordered_files = [fp for fp in files if fp in l1l2_results]
+    ordered_files = [fp for fp in l1l2_results if str(fp.resolve()) not in completed_paths]
     write_lock = threading.Lock()
 
     with open(output_csv, csv_mode, newline="", encoding="utf-8") as f:
@@ -842,22 +1000,24 @@ def run(
                         print(f"x  {err}")
                         error_count += 1
                         p2_error_log.append({"phase": 2, "filename": fp.name, "file_path": str(fp), "error": err})
-                    else:
-                        auth = row.get("authority", "")
-                        if auth:
-                            l1 = l1l2_results[fp][0]
-                            vector_store.update(l1.get("filename", ""), {"authority": auth})
-                        priority = row["review_priority"]
-                        print(f"ok  {str(row.get('domain',''))[:20]:<20} | {priority}")
-                        with write_lock:
-                            writer.writerow(row)
-                            f.flush()
-                        ok_count += 1
-                        risk_counts[priority] = risk_counts.get(priority, 0) + 1
-                        if row.get("llm_status"):
-                            llm_fail_count += 1
-                        if on_progress:
-                            on_progress(done, len(ordered_files), row)
+                        continue
+                    auth = row.get("authority", "")
+                    if auth:
+                        l1 = l1l2_results[fp][0]
+                        vector_store.update(l1.get("filename", ""), {"authority": auth})
+                    priority = row["review_priority"]
+                    print(f"ok  {str(row.get('domain',''))[:20]:<20} | {priority}")
+                    with write_lock:
+                        writer.writerow(row)
+                        f.flush()
+                        os.fsync(f.fileno())
+                        completed_paths.add(str(fp))
+                    ok_count += 1
+                    risk_counts[priority] = risk_counts.get(priority, 0) + 1
+                    if row.get("llm_status"):
+                        llm_fail_count += 1
+                    if on_progress:
+                        on_progress(done, len(ordered_files), row)
         else:
             # ── SERIAL Phase 2 ────────────────────────────────────────────
             for i, fp in enumerate(ordered_files, 1):
@@ -873,6 +1033,8 @@ def run(
                         vector_store.update(l1.get("filename", ""), {"authority": auth})
                     writer.writerow(row)
                     f.flush()
+                    os.fsync(f.fileno())
+                    completed_paths.add(str(fp))
                     priority = row["review_priority"]
                     print(f"ok  {str(row.get('domain',''))[:20]:<20} | {priority}")
                     ok_count += 1

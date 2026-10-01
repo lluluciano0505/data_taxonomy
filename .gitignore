@@ -12,6 +12,8 @@ saved_configs.json
 *.csv
 *.csv.*
 *.run.json
+*.resume.json
+*.resume.jsonl
 *.taxonomy.yaml
 *.bak
 

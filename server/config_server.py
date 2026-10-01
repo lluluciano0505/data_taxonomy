@@ -423,13 +423,32 @@ def pipeline_status():
         state_path = ROOT / "logs" / "last_pipeline_state.json"
         if state_path.exists():
             saved = json.loads(state_path.read_text(encoding="utf-8"))
-            if not saved.get("running"):
+            if saved.get("run_id"):
+                if saved.get("running"):
+                    saved.update(running=False, code=None, interrupted=True)
                 state = saved
+    state["resumable"] = _has_resumable_checkpoint(state.get("output_csv", ""))
     return jsonify(state)
+
+
+def _has_resumable_checkpoint(output_csv: str) -> bool:
+    if not output_csv:
+        return False
+    output = Path(output_csv)
+    return Path(str(output) + ".resume.json").is_file()
 
 
 @app.route("/run-pipeline", methods=["POST"])
 def run_pipeline():
+    return _start_pipeline(resume=False)
+
+
+@app.route("/resume-pipeline", methods=["POST"])
+def resume_pipeline():
+    return _start_pipeline(resume=True)
+
+
+def _start_pipeline(resume: bool):
     global _pipeline_proc
     from core.api_connection import require_api_key
     from core.config_loader import get_paths_config
@@ -444,9 +463,11 @@ def run_pipeline():
         paths = get_paths_config(cfg)
         if not paths.input_dir.is_dir():
             raise ValueError("Input folder does not exist")
+        if resume and not _has_resumable_checkpoint(str(paths.output_csv)):
+            return jsonify({"error": "No resumable run was found for this project's output."}), 409
         run_id = uuid.uuid4().hex
         run_dir = ROOT / "logs" / "runs" / run_id
-        run_dir.mkdir(parents=True)
+        run_dir.mkdir(parents=True, exist_ok=True)
         tax = yaml.safe_load(Path(paths.taxonomy_path).read_text(encoding="utf-8"))
         tax_path = run_dir / "taxonomy.yaml"
         tax_path.write_text(yaml.safe_dump(tax, allow_unicode=True), encoding="utf-8")
@@ -458,13 +479,19 @@ def run_pipeline():
         env = os.environ.copy()
         env.pop("MODEL", None)  # UI model selection is authoritative for UI runs.
         env.update(PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
+        command = [sys.executable, "-u", str(ROOT / "main.py"), "--config", str(run_path), "--no-dashboard"]
+        if resume:
+            command.append("--resume")
         _pipeline_proc = subprocess.Popen(
-            [sys.executable, "-u", str(ROOT / "main.py"), "--config", str(run_path), "--no-dashboard"],
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=str(ROOT), env=env,
+            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=str(ROOT), env=env,
             encoding="utf-8", errors="replace", bufsize=1)
         proc = _pipeline_proc
         _run_state.update(running=True, lines=[], code=None, output_csv=str(paths.output_csv),
-                          project=cfg.get("project", {}).get("name", ""), run_id=run_id, stopped=False)
+                          project=cfg.get("project", {}).get("name", ""), run_id=run_id,
+                          stopped=False, resumable=True)
+        state_path = ROOT / "logs" / "last_pipeline_state.json"
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        state_path.write_text(json.dumps(_run_state, ensure_ascii=False), encoding="utf-8")
 
     def collect():
         for line in proc.stdout:
@@ -473,11 +500,12 @@ def run_pipeline():
                 _run_state["lines"] = _run_state["lines"][-500:]
         code = proc.wait()
         with _pipeline_lock:
-            _run_state.update(running=False, code=code)
+            _run_state.update(running=False, code=code,
+                              resumable=_has_resumable_checkpoint(str(paths.output_csv)))
             state_path = ROOT / "logs" / "last_pipeline_state.json"
             state_path.write_text(json.dumps(_run_state, ensure_ascii=False), encoding="utf-8")
     threading.Thread(target=collect, daemon=True).start()
-    return jsonify({"ok": True, "run_id": run_id})
+    return jsonify({"ok": True, "run_id": run_id, "resumed": resume})
 
 
 @app.route("/stop-pipeline", methods=["POST"])

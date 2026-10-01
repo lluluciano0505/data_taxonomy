@@ -356,6 +356,7 @@
     </details>
     <div class="run-actions">
       <button class="run-btn primary" id="startBtn" onclick="startPipeline()">▶ Start Processing</button>
+      <button class="run-btn ghost" id="resumeBtn" onclick="resumePipeline()" style="display:none">↻ Resume</button>
       <button class="run-btn danger"  id="stopBtn"  onclick="stopPipeline()" style="display:none">■ Stop</button>
       <button class="run-btn ghost"   id="downloadBtn" onclick="downloadCsv()" style="display:none">⬇ CSV</button>
     </div>
@@ -662,6 +663,20 @@ async function startPipeline() {
     await refreshRun();
   } catch(error) { showInfo(error.message, false); document.getElementById('startBtn').disabled = false; }
 }
+async function resumePipeline() {
+  const button = document.getElementById('resumeBtn');
+  button.disabled = true;
+  try {
+    const response = await fetch('/resume-pipeline', {method:'POST'});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Could not resume processing');
+    await refreshRun();
+  } catch (error) {
+    showInfo(error.message || 'Could not resume processing', false);
+    button.disabled = false;
+  }
+}
+
 let runOutput = '';
 let lastRun = '';
 async function refreshRun() {
@@ -676,11 +691,13 @@ async function refreshRun() {
     document.getElementById('progWrap').style.display = 'block';
     document.getElementById('progTxt').style.display = 'block';
     const progress = [...(run.lines || [])].reverse().map(line => line.match(/\[(\d+)\/(\d+)\]/)).find(Boolean);
-    const label = run.running ? (run.stopped ? 'Stopping…' : 'Running') : run.stopped ? 'Stopped' : run.code === 0 ? 'Complete' : 'Failed';
+    const label = run.running ? (run.stopped ? 'Stopping…' : 'Running') : run.stopped ? 'Stopped' : run.code === 0 ? 'Complete' : run.code != null ? 'Failed' : run.resumable ? 'Interrupted · resumable' : 'Idle';
     setChip(label, run.running ? 'chip-running' : run.code === 0 ? 'chip-done' : 'chip-err');
     setProgress(run.running ? progress ? Math.min(95, Number(progress[1])/Number(progress[2])*90) : 3 : run.code === 0 ? 100 : 0);
     document.getElementById('progTxt').textContent = run.project + ' · ' + label + (progress ? ' · ' + progress[1] + '/' + progress[2] + ' files' : '');
     document.getElementById('startBtn').disabled = run.running;
+    document.getElementById('resumeBtn').style.display = (!run.running && run.resumable && run.code !== 0) ? 'inline-block' : 'none';
+    document.getElementById('resumeBtn').disabled = false;
     document.getElementById('stopBtn').style.display = run.running ? 'inline-block' : 'none';
     document.getElementById('downloadBtn').style.display = !run.running && run.code === 0 ? 'inline-block' : 'none';
     document.getElementById('dbRow').style.display = !run.running && run.code === 0 ? 'flex' : 'none';

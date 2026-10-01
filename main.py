@@ -105,6 +105,8 @@ def main():
                         help="Launch dashboard and config UI without running the pipeline")
     parser.add_argument("--incremental", action="store_true",
                         help="Skip already-processed files; append new results to existing CSV")
+    parser.add_argument("--resume", action="store_true",
+                        help="Resume a compatible interrupted run from its output checkpoint")
     parser.add_argument("--rerun", metavar="FILTER",
                         help=(
                             "Re-process a subset of an existing CSV matching FILTER. "
@@ -154,8 +156,10 @@ def main():
         else processing.parallel_workers
     )
 
-    # CLI --incremental overrides config; config incremental key also supported
+    # CLI --incremental overrides config; resume is a separate recovery mode.
     incremental = args.incremental or processing.incremental
+    if args.resume and incremental:
+        parser.error("--resume cannot be combined with --incremental")
 
     # CLI --sample overrides config sample_n (0 means process all)
     if args.sample is not None:
@@ -190,7 +194,7 @@ def main():
 
     # ── Mode: Full / Incremental run ──────────────────────────────────────
     else:
-        mode_label = "INCREMENTAL (skip processed)" if incremental else (
+        mode_label = "RESUME interrupted run" if args.resume else "INCREMENTAL (skip processed)" if incremental else (
             f"SAMPLE {processing.sample_n}" if processing.sample_n else "ALL FILES"
         )
         print(f"  Files to process : {mode_label}")
@@ -199,7 +203,7 @@ def main():
 
         if not process_data(paths, project, processing, API_KEY,
                             effective_parallel, age_analysis, incremental,
-                            log_path=log_path):
+                            log_path=log_path, resume=args.resume):
             print("[WARN] Data processing failed. Skipping dashboard.")
             sys.exit(1)
 
@@ -251,6 +255,7 @@ def process_data(
     age_analysis: dict | None = None,
     incremental: bool = False,
     log_path: Path | None = None,
+    resume: bool = False,
 ) -> bool:
     """Run the full (or incremental) pipeline and generate CSV."""
     from core.pipeline import run
@@ -269,6 +274,7 @@ def process_data(
             sample_n    = processing.sample_n,
             parallel    = parallel,
             incremental = incremental,
+            resume      = resume,
         )
         finished_at = datetime.now()
         print(f"\n[OK] Success! Results saved to: {paths.output_csv}")

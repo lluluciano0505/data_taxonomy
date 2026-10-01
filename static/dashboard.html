@@ -639,8 +639,12 @@
   @media (max-width: 1060px) {
     .shell { padding: 20px 16px 80px; }
     .kpi-strip { flex-wrap: wrap; }
-    .panel-body { grid-template-columns: 1fr; gap: 20px 0; }
-    .panel-left { border-right: none; padding-right: 0; border-bottom: 1px solid var(--hairline); padding-bottom: 16px; }
+    .map-layout { grid-template-columns: 1fr; }
+    .map-sidebar { border-right:none; border-bottom:1px solid var(--hairline); padding-right:0; padding-bottom:16px; margin-bottom:16px; }
+    .map-sidebar .pill-group { flex-direction:row; }
+    .map-sidebar .pill { width:auto; text-align:center; }
+    .panel-body { grid-template-columns:1fr; gap:20px 0; }
+    .panel-left { border-right:none; padding-right:0; border-bottom:1px solid var(--hairline); padding-bottom:16px; }
     .kpi-grid { grid-template-columns: repeat(4, 1fr); }
     .charts-row, .detail-body, .rq-body, .rq-summaries, .impact-charts, .rq-edits {
       grid-template-columns: 1fr;
@@ -661,6 +665,30 @@
     display: flex; gap: 14px; margin-top: 20px;
   }
   .kpi-strip .kpi { flex: 1; }
+
+  /* ── Similarity map ──────────────────────────────── */
+  .map-wrap { position: relative; width: 100%; min-height: 480px; }
+  #taxonomy-map { display: block; width: 100%; height: min(68vh, 680px); min-height: 480px; cursor: crosshair; }
+  .map-toolbar { display:flex; align-items:center; justify-content:flex-end; gap:4px; margin-bottom:6px; }
+  .map-zoom-btn { width:24px; height:24px; padding:0; border:1px solid var(--hairline); border-radius:3px;
+    background:var(--surface); color:var(--muted); cursor:pointer; font:13px 'JetBrains Mono'; }
+  #map-zoom-reset { width:auto; min-width:42px; padding:0 6px; font-size:10px; }
+  .map-zoom-btn:hover { background:var(--surface-2); color:var(--fg); }
+  .map-zoom-level { min-width:42px; text-align:center; color:var(--muted); font:10px 'JetBrains Mono'; }
+  .map-tooltip { position: absolute; z-index: 4; pointer-events: none; display: none; max-width: 280px;
+    padding: 6px 9px; border: 1px solid var(--hairline); border-radius: 5px; background: #fff;
+    box-shadow: var(--shadow-2); color: var(--fg); font-size: 11px; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; }
+  #map-filter-pills .pill { font-family:inherit; letter-spacing:0; font-size:12px; border-color:transparent; background:transparent; padding:5px 8px; }
+  #map-filter-pills .pill.active { background:var(--surface-2); border-color:var(--hairline); color:var(--fg); }
+  #map-filter-pills .pill:hover { background:var(--surface-2); }
+  .map-layout { display:grid; grid-template-columns:220px 1fr; gap:0 24px; align-items:start; }
+  .map-sidebar { border-right:1px solid var(--hairline); padding-right:20px; padding-top:4px; min-width:0; }
+  .map-sidebar .map-filter-row { margin:0 0 6px; }
+  .map-sidebar .pill-group { align-items:flex-start; flex-direction:column; gap:4px; }
+  .map-sidebar .pill { width:100%; text-align:left; }
+  .map-sidebar .map-note { line-height:1.5; }
+  .map-main { min-width:0; }
 
   /* ── Part 2: Chart panels ─────────────────────────── */
   .named-panel {
@@ -786,17 +814,53 @@
   <!-- ── Part 2: Analysis panel (always open, switch between 04 / 05) ── -->
   <div id="analysis-panel" class="named-panel">
     <div class="panel-hd">
-      <button class="panel-switch-btn active" data-mode="quadrant" onclick="switchAnalysis('quadrant')">Priority</button>
+      <button class="panel-switch-btn active" data-mode="map" onclick="switchAnalysis('map')">Map</button>
+      <span style="color:var(--hairline);user-select:none;">|</span>
+      <button class="panel-switch-btn" data-mode="quadrant" onclick="switchAnalysis('quadrant')">Priority</button>
       <span style="color:var(--hairline);user-select:none;">|</span>
       <button class="panel-switch-btn" data-mode="radar" onclick="switchAnalysis('radar')">Compare</button>
-      <span id="quadrant-mode-btns" style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+      <span id="quadrant-mode-btns" style="margin-left:auto; display:none; align-items:center; gap:6px;">
         <button id="qc-domain" class="pill active" style="font-size:10px; padding:2px 8px;" onclick="setQuadrantColor('domain')">Category</button>
         <button id="qc-score" class="pill" style="font-size:10px; padding:2px 8px;" onclick="setQuadrantColor('score')">Score</button>
       </span>
     </div>
 
-    <!-- 04 Decision Priority content -->
-    <div id="quadrant-content">
+    <div id="map-content">
+      <div class="map-layout">
+        <aside class="map-sidebar" aria-label="Map filters">
+          <div class="map-filter-row">
+            <span class="label" style="white-space:nowrap;font-size:10px;">Filter by</span>
+            <select id="map-filter-dim" aria-label="Map filter dimension">
+              <option value="domain">Domain</option>
+              <option value="scale">Scale</option>
+              <option value="lifecycle">Lifecycle</option>
+              <option value="asset_type">Asset Type</option>
+              <option value="information_type">Info Type</option>
+              <option value="governance">Governance</option>
+              <option value="confidentiality">Confidentiality</option>
+            </select>
+          </div>
+          <div class="pill-group" id="map-filter-pills"></div>
+          <div class="map-note" id="map-filter-note"></div>
+        </aside>
+        <div class="map-main">
+          <div class="map-toolbar" aria-label="Map zoom controls">
+            <button class="map-zoom-btn" id="map-zoom-out" type="button" aria-label="Zoom out">−</button>
+            <span class="map-zoom-level" id="map-zoom-level">100%</span>
+            <button class="map-zoom-btn" id="map-zoom-reset" type="button" aria-label="Reset zoom">Reset</button>
+            <button class="map-zoom-btn" id="map-zoom-in" type="button" aria-label="Zoom in">+</button>
+          </div>
+          <div class="map-wrap" id="map-wrap">
+            <canvas id="taxonomy-map" aria-label="Content similarity map of project files"></canvas>
+            <div class="map-tooltip" id="map-tooltip"></div>
+          </div>
+          <div class="map-note">Primary domain sets color; candidates affect filtering and position.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decision Priority content -->
+    <div id="quadrant-content" class="hidden">
       <div class="panel-body">
         <div class="panel-left">
           <div style="display:flex; align-items:baseline; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
@@ -947,6 +1011,7 @@ const state = {
   edits: {},                                // {filename: {field: value}}
   filters: {
     struct: { dim: 'domain', values: new Set() },
+    map:    { dim: 'domain', values: new Set() },
     all:    { dim: 'domain', values: new Set(), q: '' },
   },
   sort: { col: null, dir: 'asc' },
@@ -958,6 +1023,7 @@ const state = {
   csv: null,
   csvs: [],
   quadrantColorMode: 'domain',              // 'domain' | 'score'
+  mapDomains: new Set(),                     // empty means all domains highlighted
   radarDim: 'domain',                       // active dimension for 05 radar
   radarSelection: new Set(),                // selected category values for 05 radar
   pendingScores: {},                        // {filename: deepAnalysis result} waiting for Mark reviewed
@@ -1102,6 +1168,12 @@ async function reloadData() {
   state.edits = rev.edits || {};
   state.taxonomy = tx || {};
   state.data     = d.rows || [];
+  mapLayoutCache = [];
+  mapDataVersion++;
+  mapLayoutCacheKey = '';
+  mapDomainColorCache.clear();
+  mapView.zoom = 1;
+  state.filters.map = { dim: 'domain', values: new Set() };
   state.plOpen   = null;   // re-open the strongest non-empty priority band for the new data
   setMetaLine((state.csv||'').split('/').pop());
   $('#meta-line').title = d.run?.model ? `${d.run.provider} / ${d.run.model}` : 'Historical run: connection not recorded';
@@ -1112,6 +1184,8 @@ function setMetaLine(txt) { $('#meta-line').textContent = txt; }
 
 function renderAll() {
   renderKpis();
+  renderMapFilters();
+  if ($('#map-content') && !$('#map-content').classList.contains('hidden')) renderTaxonomyMap();
   renderStructureFilters();
   renderStructureCharts();
   renderAllFiltersOptions();
@@ -1177,7 +1251,7 @@ function renderPills(sel, values, activeSet, onChange, disabledSet = new Set(), 
   for (const v of values) {
     const p = document.createElement('button');
     const isDisabled = disabledSet.has(v);
-    const label = sel === '#struct-filter-pills' ? (COMPACT_DOMAINS[v] || v) : v;
+    const label = sel === '#struct-filter-pills' || sel === '#map-filter-pills' ? (COMPACT_DOMAINS[v] || v) : v;
     p.title = v;
     p.setAttribute('aria-label', v);
     p.className = 'pill' + (activeSet.has(v) ? ' active' : '') + (isDisabled ? ' disabled' : '');
@@ -1206,7 +1280,7 @@ function renderPills(sel, values, activeSet, onChange, disabledSet = new Set(), 
     const clr = document.createElement('button');
     clr.className = 'pill-clear';
     clr.textContent = 'clear';
-    clr.onclick = () => { activeSet.clear(); onChange(); renderAll(); };
+    clr.onclick = () => { activeSet.clear(); onChange(); };
     el.appendChild(clr);
   }
 }
@@ -1246,7 +1320,439 @@ function renderStructureCharts() {
 
 }
 
-/* L3 rubric levels (weakest → strongest) — mirrors core/layer3.py LEVELS */
+/* ── Local file-content similarity map ─────────────────────────────────── */
+let mapLayoutCacheKey = '';
+let mapLayoutCache = [];
+let mapDataVersion = 0;
+let mapResizeObserver = null;
+const mapView = { zoom: 1, minZoom: 0.75, maxZoom: 3.5, baseHeight: null };
+
+function mapEligibleRows() {
+  return state.data.flatMap(row => {
+    const primary = String(row.domain || '').trim();
+    if (!primary || /^(unknown|none)$/i.test(primary)) return [];
+    const candidates = String(row.domain_candidates || '').split(/[,;|]/)
+      .map(value => value.trim()).filter(value => value && !/^(unknown|none)$/i.test(value));
+    const domains = [primary, ...candidates.filter(value => value !== primary)];
+    return [{ row, domain: primary, secondaryDomain: domains[1] || null, domains }];
+  });
+}
+
+function renderMapFilters() {
+  const filter = state.filters.map;
+  const eligible = mapEligibleRows();
+  const activeDomains = filter.dim === 'domain' && filter.values.size
+    ? new Set(filter.values) : null;
+  const domainFiltered = activeDomains
+    ? eligible.filter(item => item.domains.some(domain => activeDomains.has(domain)))
+    : eligible;
+  const rows = domainFiltered.map(item => item.row);
+  const values = filter.dim === 'domain'
+    ? [...new Set(eligible.flatMap(item => item.domains))].sort()
+    : [...new Set(rows.map(row => getFilterVal(row, filter.dim)).filter(Boolean))].sort();
+  const available = new Set(filter.dim === 'domain'
+    ? domainFiltered.flatMap(item => item.domains)
+    : rows.map(row => getFilterVal(row, filter.dim)).filter(Boolean));
+  const disabled = new Set(values.filter(value => !available.has(value) ||
+    (filter.values.size > 0 && !filter.values.has(value))));
+  const colorMap = filter.dim === 'domain' ? {} : null;
+  const domainColors = mapDomainColors().colors;
+  if (colorMap) values.forEach(value => {
+    colorMap[value] = domainColors.get(value) || PALETTE[values.indexOf(value) % PALETTE.length];
+  });
+  renderPills('#map-filter-pills', values, filter.values, renderMapView, disabled, colorMap);
+  const visible = filteredMapRows();
+  const count = visible.length;
+  const note = $('#map-filter-note');
+  if (note) note.textContent = `${count} of ${eligible.length} files · candidate-inclusive membership`;
+}
+
+function filteredMapRows() {
+  const { dim, values } = state.filters.map;
+  const eligible = mapEligibleRows();
+  if (!values.size) return eligible;
+  if (dim === 'domain') {
+    return eligible.filter(item => item.domains.some(domain => values.has(domain)));
+  }
+  return eligible.filter(item => values.has(getFilterVal(item.row, dim)));
+}
+
+function renderMapView() {
+  renderMapFilters();
+  renderTaxonomyMap();
+}
+
+function mapLayoutKey() {
+  return `${state.csv || ''}|${mapDataVersion}|${state.data.length}`;
+}
+
+function mapTokens(row) {
+  const text = `${row.filename || ''} ${row.short_summary || ''} ${row.keywords || ''}`;
+  const tokens = String(text).toLowerCase().normalize('NFKD')
+    .replace(/[\\u0300-\\u036f]/g, '')
+    .match(/[\\p{L}\\p{N}]{2,}/gu) || [];
+  return tokens.filter(token => !MAP_STOP_WORDS.has(token));
+}
+
+const MAP_STOP_WORDS = new Set(`a an and are as at be by for from in into is it of on or that the this to with project file drawing document plan design architecture architectural report study data information existing proposed site general detail notes appendix`.split(' '));
+const mapDomainColorCache = new Map();
+
+function mapDomainColors() {
+  const defined = (state.taxonomy.domains || []).map(domain => typeof domain === 'string' ? domain : domain.name).filter(Boolean);
+  const observed = [...new Set(mapEligibleRows().map(item => item.domain))];
+  const domains = [...new Set([...defined, ...observed])].filter(domain => observed.includes(domain));
+  if (!mapDomainColorCache.size) {
+    [...new Set([...defined, ...observed])].forEach((domain, index) => mapDomainColorCache.set(domain, PALETTE[index % PALETTE.length]));
+  }
+  domains.forEach(domain => {
+    if (!mapDomainColorCache.has(domain)) mapDomainColorCache.set(domain, PALETTE[mapDomainColorCache.size % PALETTE.length]);
+  });
+  return { domains, colors: new Map(domains.map(domain => [domain, mapDomainColorCache.get(domain)])) };
+}
+
+function buildMapLayout() {
+  const key = mapLayoutKey();
+  if (key === mapLayoutCacheKey) return mapLayoutCache;
+  const eligible = mapEligibleRows();
+  if (!eligible.length) { mapLayoutCacheKey = key; mapLayoutCache = []; return mapLayoutCache; }
+
+  const domains = [...new Set(eligible.map(item => item.domain))].sort();
+  const domainRows = new Map(domains.map(domain => [domain, []]));
+  eligible.forEach((item, index) => domainRows.get(item.domain).push(index));
+  const domainSizes = new Map(domains.map(domain => [domain, domainRows.get(domain).length]));
+  const counts = domainSizes;
+  const totalSize = domains.reduce((sum, domain) => sum + counts.get(domain), 0);
+  const clusterArea = 0.9 * 0.9;
+  const domainRadii = new Map(domains.map(domain => {
+    const fraction = counts.get(domain) / Math.max(1, totalSize);
+    const densityBoost = 1 + Math.log1p(counts.get(domain)) / 4;
+    const radius = clamp(Math.sqrt(fraction * clusterArea / Math.PI) * 1.55 * densityBoost, 0.075, 0.42);
+    return [domain, radius];
+  }));
+  const domainCenters = new Map(domains.map((domain, index) => {
+    const hash = hashString(domain);
+    const phase = hash / 4294967296 * (Math.PI / Math.max(1, domains.length));
+    const angle = (index / Math.max(1, domains.length)) * Math.PI * 2 + phase;
+    const radialDistance = 0.32 + domainRadii.get(domain) + 0.07;
+    const jitter = ((hash >>> 9 & 65535) / 65535 - 0.5) * (Math.PI / Math.max(4, domains.length * 2));
+    return [domain, { x: Math.cos(angle + jitter) * radialDistance, y: Math.sin(angle + jitter) * radialDistance,
+      vx: 0, vy: 0, seedAngle: angle + jitter, index }];
+  }));
+  const domainTargets = new Map();
+  domains.forEach(domain => domainTargets.set(domain, domainCenters.get(domain)));
+  const docs = eligible.map(item => mapTokens(item.row));
+  const df = new Map();
+  docs.forEach(tokens => new Set(tokens).forEach(token => df.set(token, (df.get(token) || 0) + 1)));
+  const vectors = docs.map(tokens => {
+    const counts = new Map();
+    tokens.forEach(token => counts.set(token, (counts.get(token) || 0) + 1));
+    const weighted = new Map(); let norm = 0;
+    for (const [token, count] of counts) {
+      const weight = (1 + Math.log(count)) * (1 + Math.log((eligible.length + 1) / (1 + df.get(token))));
+      weighted.set(token, weight); norm += weight * weight;
+    }
+    const scale = Math.sqrt(norm) || 1;
+    for (const [token, weight] of weighted) weighted.set(token, weight / scale);
+    return weighted;
+  });
+  const commonTokenLimit = Math.max(50, Math.ceil(eligible.length * 0.15));
+  const edgeMap = new Map();
+  for (const indices of domainRows.values()) {
+    if (indices.length < 2) continue;
+    const postings = new Map();
+    indices.forEach((globalIndex, localIndex) => vectors[globalIndex].forEach((weight, token) => {
+      if (df.get(token) > commonTokenLimit) return;
+      if (!postings.has(token)) postings.set(token, []);
+      postings.get(token).push([localIndex, weight]);
+    }));
+    indices.forEach((globalIndex, localIndex) => {
+      const scores = new Map();
+      for (const [token, weight] of vectors[globalIndex]) {
+        if (df.get(token) > commonTokenLimit) continue;
+        for (const [otherLocal, otherWeight] of postings.get(token) || []) {
+          if (otherLocal !== localIndex) scores.set(otherLocal, (scores.get(otherLocal) || 0) + weight * otherWeight);
+        }
+      }
+      [...scores].sort((a, b) => b[1] - a[1]).slice(0, 4).forEach(([otherLocal, score]) => {
+        const otherIndex = indices[otherLocal];
+        if (score >= 0.075 && globalIndex < otherIndex) {
+          const edgeKey = `${globalIndex}:${otherIndex}`;
+          edgeMap.set(edgeKey, [globalIndex, otherIndex, Math.max(score, edgeMap.get(edgeKey)?.[2] || 0)]);
+        }
+      });
+    });
+  }
+
+  const points = eligible.map((item, index) => {
+    const center = domainCenters.get(item.domain);
+    const hash = hashString(String(rowKey(item.row) || index));
+    const angle = hash / 4294967296 * Math.PI * 2;
+    const radialT = ((hash >>> 8 & 65535) / 65535);
+    const spread = domainRadii.get(item.domain) * (0.22 + radialT * 0.9);
+    const secondaryCenter = item.secondaryDomain && domainCenters.has(item.secondaryDomain)
+      ? domainCenters.get(item.secondaryDomain) : center;
+    const blend = item.secondaryDomain && domainSizes.has(item.secondaryDomain) ? 0.08 : 0;
+    const cx = center.x * (1 - blend) + secondaryCenter.x * blend;
+    const cy = center.y * (1 - blend) + secondaryCenter.y * blend;
+    return { x: cx + Math.cos(angle) * spread, y: cy + Math.sin(angle) * spread,
+      vx: 0, vy: 0, domain: item.domain, secondaryDomain: item.secondaryDomain,
+      cx, cy, row: item.row };
+  });
+  const neighbors = Array.from({ length: points.length }, () => []);
+  for (const [a, b, weight] of edgeMap.values()) {
+    const target = 0.008 + (1 - Math.min(1, weight)) * 0.018;
+    neighbors[a].push([b, weight, target]); neighbors[b].push([a, weight, target]);
+  }
+  const side = 0.032;
+  for (let step = 0; step < 220; step++) {
+    const cooling = 0.03 * (1 - step / 255);
+    const cells = new Map();
+    points.forEach((point, index) => {
+      const cell = `${Math.floor(point.x / side)},${Math.floor(point.y / side)}`;
+      if (!cells.has(cell)) cells.set(cell, []);
+      cells.get(cell).push(index);
+    });
+    points.forEach((point, index) => {
+      let fx = 0, fy = 0;
+      for (const [otherIndex, weight, target] of neighbors[index]) {
+        const other = points[otherIndex], dx = other.x - point.x, dy = other.y - point.y;
+        const distance = Math.hypot(dx, dy) || 0.0001;
+        const force = (distance - target) * Math.min(1.2, weight * 2.4);
+        fx += dx / distance * force; fy += dy / distance * force;
+      }
+      const gx = Math.floor(point.x / side), gy = Math.floor(point.y / side);
+      const uniquePeers = [];
+      for (let ox = -1; ox <= 1; ox++) for (let oy = -1; oy <= 1; oy++) {
+        for (const otherIndex of cells.get(`${gx + ox},${gy + oy}`) || []) {
+          if (index < otherIndex) uniquePeers.push(otherIndex);
+        }
+      }
+      for (const otherIndex of uniquePeers) {
+        const other = points[otherIndex], dx = point.x - other.x, dy = point.y - other.y;
+        const distance2 = dx * dx + dy * dy;
+        const minDistance = point.domain === other.domain ? 0.028 : 0.055;
+        if (distance2 < minDistance * minDistance) {
+          const distance = Math.sqrt(distance2) || 0.0001;
+          const force = (minDistance - distance) * (point.domain === other.domain ? 1.05 : 1.35);
+          const nx = dx / distance * force, ny = dy / distance * force;
+          fx += nx; fy += ny;
+          other.vx -= nx * cooling * 0.9;
+          other.vy -= ny * cooling * 0.9;
+        }
+      }
+      fx += (point.cx - point.x) * 0.006;
+      fy += (point.cy - point.y) * 0.006;
+      if (point.secondaryDomain && domainCenters.has(point.secondaryDomain)) {
+        const secondary = domainCenters.get(point.secondaryDomain);
+        const strength = domainSizes.has(point.secondaryDomain) ? 0.0008 : 0;
+        fx += (secondary.x - point.x) * strength;
+        fy += (secondary.y - point.y) * strength;
+      }
+      point.vx = (point.vx + fx * cooling) * 0.72;
+      point.vy = (point.vy + fy * cooling) * 0.72;
+    });
+    points.forEach(point => {
+      point.x += point.vx; point.y += point.vy;
+    });
+  }
+
+  if (points.length === 1) {
+    points[0].x = 0.5;
+    points[0].y = 0.5;
+  }
+  const minX = Math.min(...points.map(point => point.x)), maxX = Math.max(...points.map(point => point.x));
+  const minY = Math.min(...points.map(point => point.y)), maxY = Math.max(...points.map(point => point.y));
+  const contentWidth = maxX - minX, contentHeight = maxY - minY;
+  const scale = Math.min(0.92 / Math.max(0.001, contentWidth), 0.9 / Math.max(0.001, contentHeight));
+  points.forEach(point => {
+    point.x = 0.5 + (point.x - (minX + maxX) / 2) * scale;
+    point.y = 0.5 + (point.y - (minY + maxY) / 2) * scale;
+  });
+  mapLayoutCacheKey = key;
+  mapLayoutCache = points;
+  return points;
+}
+
+
+function drawMapMarker(ctx, x, y, radius, color, muted = false, emphasized = false) {
+  ctx.save();
+  if (muted) ctx.globalAlpha = 0.14;
+  ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fillStyle = color || '#8A8A8A'; ctx.fill();
+  if (emphasized && !muted) {
+    ctx.beginPath(); ctx.arc(x, y, radius + 2.5, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(20, 20, 20, 0.72)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function mapHull(points, padding) {
+  const unique = [...new Map(points.map(point => [`${point.x.toFixed(4)},${point.y.toFixed(4)}`, point])).values()];
+  if (unique.length < 3) return null;
+  const sorted = [...unique].sort((a, b) => a.x - b.x || a.y - b.y);
+  const cross = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+  const lower = [], upper = [];
+  for (const point of sorted) {
+    while (lower.length >= 2 && cross(lower.at(-2), lower.at(-1), point) <= 0) lower.pop();
+    lower.push(point);
+  }
+  for (const point of [...sorted].reverse()) {
+    while (upper.length >= 2 && cross(upper.at(-2), upper.at(-1), point) <= 0) upper.pop();
+    upper.push(point);
+  }
+  const hull = lower.slice(0, -1).concat(upper.slice(0, -1));
+  const cx = hull.reduce((sum, point) => sum + point.x, 0) / hull.length;
+  const cy = hull.reduce((sum, point) => sum + point.y, 0) / hull.length;
+  return hull.map(point => {
+    const dx = point.x - cx, dy = point.y - cy, distance = Math.hypot(dx, dy) || 1;
+    return { x: point.x + dx / distance * padding, y: point.y + dy / distance * padding };
+  });
+}
+
+function drawMapCluster(ctx, members, color, emphasized) {
+  if (!members.length) return;
+  const cx = members.reduce((sum, point) => sum + point.x, 0) / members.length;
+  const cy = members.reduce((sum, point) => sum + point.y, 0) / members.length;
+  const spread = members.reduce((sum, point) => sum + Math.hypot(point.x - cx, point.y - cy), 0) / members.length;
+  const hull = mapHull(members, clamp(spread * 0.12, 4, 12));
+  ctx.save(); ctx.globalAlpha = emphasized ? 0.075 : 0.03; ctx.fillStyle = color;
+  if (hull) {
+    ctx.beginPath(); ctx.moveTo((hull[0].x + hull[1].x) / 2, (hull[0].y + hull[1].y) / 2);
+    for (let i = 1; i <= hull.length; i++) {
+      const current = hull[i % hull.length], next = hull[(i + 1) % hull.length];
+      ctx.quadraticCurveTo(current.x, current.y, (current.x + next.x) / 2, (current.y + next.y) / 2);
+    }
+    ctx.closePath(); ctx.fill();
+  } else if (members.length > 1) {
+    const pad = Math.max(5, Math.min(12, spread + 5));
+    const first = members[0], last = members[members.length - 1];
+    ctx.beginPath(); ctx.moveTo(first.x - pad, first.y - pad);
+    ctx.quadraticCurveTo(cx, cy - pad * 1.5, last.x + pad, last.y + pad);
+    ctx.quadraticCurveTo(cx, cy + pad * 1.5, first.x - pad, first.y - pad);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function renderTaxonomyMap() {
+  const canvas = $('#taxonomy-map'), wrap = $('#map-wrap');
+  if (!canvas || !wrap || $('#map-content').classList.contains('hidden')) return;
+  if (!mapResizeObserver && window.ResizeObserver) {
+    mapResizeObserver = new ResizeObserver(() => renderTaxonomyMap());
+    mapResizeObserver.observe(wrap);
+  }
+  const points = buildMapLayout();
+  const dataHeight = clamp(480 + Math.sqrt(Math.max(0, points.length - 250)) * 7, 480, 980);
+  const mapHeight = Math.round(dataHeight);
+  const mapZoomLabel = $('#map-zoom-level');
+  if (mapZoomLabel) mapZoomLabel.textContent = `${Math.round(mapView.zoom * 100)}%`;
+  canvas.style.height = `${mapHeight}px`;
+  wrap.style.minHeight = `${mapHeight}px`;
+  const rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.round(rect.width * dpr); canvas.height = Math.round(rect.height * dpr);
+  const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, rect.width, rect.height);
+  const { colors } = mapDomainColors();
+  const highlightedKeys = new Set(filteredMapRows().map(item => rowKey(item.row)));
+  const hasMapFilter = state.filters.map.values.size > 0;
+  const visible = points;
+  const activeDomainColors = state.filters.map.dim === 'domain' && state.filters.map.values.size
+    ? new Set(state.filters.map.values) : null;
+  const eligibleByKey = new Map(mapEligibleRows().map(item => [rowKey(item.row), item]));
+  const isHighlighted = point => !hasMapFilter || highlightedKeys.has(rowKey(point.row));
+  const pointMatchesSelectedDomain = point => activeDomainColors?.has(point.domain) || false;
+  const pad = 38;
+  const worldScale = mapView.zoom;
+  const sx = x => pad + (0.5 + (x - 0.5) * worldScale) * (rect.width - pad * 2);
+  const sy = y => pad + (0.5 + (y - 0.5) * worldScale) * (rect.height - pad * 2);
+  const groups = new Map();
+  visible.forEach(point => {
+    if (!groups.has(point.domain)) groups.set(point.domain, []);
+    groups.get(point.domain).push({ x: sx(point.x), y: sy(point.y), row: point.row });
+  });
+  for (const [domain, members] of groups) {
+    const activeMembers = members.filter(point => isHighlighted(point));
+    drawMapCluster(ctx, activeMembers.length ? activeMembers : members, colors.get(domain), activeMembers.length > 0);
+  }
+  const pointRadius = visible.length > 3000 ? 2.5 : visible.length > 1200 ? 3 : 4;
+  visible.forEach(point => {
+    const active = isHighlighted(point);
+    const primaryColor = colors.get(point.domain);
+    drawMapMarker(ctx, sx(point.x), sy(point.y),
+      point.row.filename === state.selectedStructure ? pointRadius + 2 : pointRadius,
+      primaryColor, !active, pointMatchesSelectedDomain(point));
+  });
+  canvas._mapPoints = visible.map(point => ({ x: sx(point.x), y: sy(point.y), row: point.row }));
+  const cellSize = 24, pointCells = new Map();
+  canvas._mapPoints.forEach((point, index) => {
+    const cell = `${Math.floor(point.x / cellSize)},${Math.floor(point.y / cellSize)}`;
+    if (!pointCells.has(cell)) pointCells.set(cell, []);
+    pointCells.get(cell).push(index);
+  });
+  canvas._pointCells = pointCells;
+}
+
+function wireTaxonomyMap() {
+  const canvas = $('#taxonomy-map'), tooltip = $('#map-tooltip');
+  if (!canvas) return;
+  const findPoint = event => {
+    const rect = canvas.getBoundingClientRect(), x = event.clientX - rect.left, y = event.clientY - rect.top;
+    let best = null, bestD = 12 * 12;
+    const cells = canvas._pointCells || new Map(), size = 24;
+    const gx = Math.floor(x / size), gy = Math.floor(y / size);
+    for (let ox = -1; ox <= 1; ox++) for (let oy = -1; oy <= 1; oy++) {
+      for (const index of cells.get(`${gx + ox},${gy + oy}`) || []) {
+        const point = canvas._mapPoints[index];
+        const dx = point.x - x, dy = point.y - y, d = dx * dx + dy * dy;
+        if (d < bestD) { best = point; bestD = d; }
+      }
+    }
+    return best;
+  };
+  const setZoom = value => {
+    const next = clamp(value, mapView.minZoom, mapView.maxZoom);
+    if (next === mapView.zoom) return;
+    mapView.zoom = next;
+    renderTaxonomyMap();
+  };
+  $('#map-zoom-out')?.addEventListener('click', () => setZoom(mapView.zoom / 1.25));
+  $('#map-zoom-reset')?.addEventListener('click', () => setZoom(1));
+  $('#map-zoom-in')?.addEventListener('click', () => setZoom(mapView.zoom * 1.25));
+  canvas.addEventListener('wheel', event => {
+    event.preventDefault();
+    setZoom(mapView.zoom * (event.deltaY < 0 ? 1.12 : 1 / 1.12));
+  }, { passive: false });
+  canvas.addEventListener('pointermove', event => {
+    const point = findPoint(event);
+    if (!point) { tooltip.style.display = 'none'; canvas.style.cursor = 'crosshair'; return; }
+    const domain = String(point.row.domain || '').trim();
+    const filename = String(point.row.filename || '').trim();
+    tooltip.textContent = domain && filename ? `${domain} · ${filename}` : (filename || domain);
+    tooltip.style.display = 'block'; tooltip.style.left = `${Math.min(event.offsetX + 12, canvas.clientWidth - 290)}px`;
+    tooltip.style.top = `${Math.max(4, event.offsetY - 30)}px`; canvas.style.cursor = 'pointer';
+  });
+  canvas.addEventListener('pointerleave', () => { tooltip.style.display = 'none'; canvas.style.cursor = 'crosshair'; });
+  canvas.addEventListener('click', event => {
+    const point = findPoint(event); if (!point) return;
+    const filename = point.row.filename;
+    state.selectedStructure = filename;
+    const allTab = document.querySelector('.tab[data-tab="all"]');
+    if (allTab && !allTab.classList.contains('active')) {
+      state.selectedAll = filename;
+      allTab.click();
+    } else {
+      state.selectedAll = null;
+      selectAllRow(filename);
+    }
+    document.getElementById('detail-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    renderTaxonomyMap();
+  });
+}
+
 const L3_LEVELS = {
   authority:     ['Background', 'Advisory', 'Client Brief', 'Hard Constraint', 'Statutory'],
   scope:         ['Single Detail', 'Subsystem', 'Single Discipline', 'Multi-Discipline', 'Whole Project'],
@@ -2122,6 +2628,7 @@ function wireTabs() {
       $$('.tab').forEach(b => b.classList.toggle('active', b === btn));
       $$('.tab-panel').forEach(p =>
         p.classList.toggle('active', p.dataset.tabPanel === id));
+      if (id === 'all' && state.selectedAll) renderFileDetail(state.selectedAll);
     };
   });
 }
@@ -2232,6 +2739,12 @@ function wireTopControls() {
     state.filters.struct.dim    = e.target.value;
     state.filters.struct.values = new Set();
     renderStructureCharts();
+  });
+
+  $('#map-filter-dim').addEventListener('change', e => {
+    state.filters.map.dim = e.target.value;
+    state.filters.map.values = new Set();
+    renderMapView();
   });
 
   $('#all-filter-dim').addEventListener('change', e => {
@@ -2352,13 +2865,17 @@ document.addEventListener('keydown', async (e) => {
 /* ── 05 Radar Comparison ──────────────────────────────────────────────────── */
 
 function switchAnalysis(mode) {
+  const isMap = mode === 'map';
   const isQuadrant = mode === 'quadrant';
+  $('#map-content').classList.toggle('hidden', !isMap);
   $('#quadrant-content').classList.toggle('hidden', !isQuadrant);
-  $('#radar-content').classList.toggle('hidden', isQuadrant);
+  $('#radar-content').classList.toggle('hidden', mode !== 'radar');
   $('#quadrant-mode-btns').style.display = isQuadrant ? 'flex' : 'none';
   $$('.panel-switch-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.mode === mode));
-  if (isQuadrant) {
+  if (isMap) {
+    setTimeout(renderTaxonomyMap, 60);
+  } else if (isQuadrant) {
     setTimeout(() => {
       Plotly.Plots.resize(document.getElementById('chart-quadrant'));
       renderStructureCharts();
@@ -2613,6 +3130,7 @@ function toggleQuadrantPanel() { switchAnalysis('quadrant'); }
 
 wireTabs();
 wireTopControls();
+wireTaxonomyMap();
 boot();
 
 /* ── Hamburger ── */
